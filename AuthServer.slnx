@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AuthServer.Api/AuthServer.Api.csproj" />
+    <Project Path="src/AuthServer.Application/AuthServer.Application.csproj" />
+    <Project Path="src/AuthServer.Contracts/AuthServer.Contracts.csproj" />
+    <Project Path="src/AuthServer.Domain/AuthServer.Domain.csproj" />
+    <Project Path="src/AuthServer.Infrastructure/AuthServer.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AuthServer.IntegrationTests/AuthServer.IntegrationTests.csproj" />
+    <Project Path="tests/AuthServer.UnitTests/AuthServer.UnitTests.csproj" />
+  </Folder>
+</Solution>
