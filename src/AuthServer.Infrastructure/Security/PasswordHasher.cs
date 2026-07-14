@@ -6,11 +6,11 @@ namespace AuthServer.Infrastructure.Security;
 
 public sealed class PasswordHasher : IPasswordHasher
 {
-    private readonly PasswordHasher<object> _hasher = new();
+    private static readonly Microsoft.AspNetCore.Identity.PasswordHasher<object> Hasher = new();
 
     public PasswordHash Hash(string password)
     {
-        var hash = _hasher.HashPassword(new object(), password);
+        var hash = Hasher.HashPassword(new object(), password);
 
         return PasswordHash.From(hash);
     }
@@ -19,7 +19,7 @@ public sealed class PasswordHasher : IPasswordHasher
         string password,
         PasswordHash passwordHash)
     {
-        var result = _hasher.VerifyHashedPassword(
+        var result = Hasher.VerifyHashedPassword(
             new object(),
             passwordHash.Value,
             password);

@@ -3,6 +3,7 @@ using AuthServer.Application.Abstractions.Security;
 using AuthServer.Infrastructure.Persistence;
 using AuthServer.Infrastructure.Persistence.Repositories;
 using AuthServer.Infrastructure.Security;
+using AuthServer.Infrastructure.Security.Jwt;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,8 +27,13 @@ public static class DependencyInjection
 
         services.AddScoped<IUnitOfWork>(sp =>
             sp.GetRequiredService<AuthDbContext>());
+        
+        services.Configure<JwtOptions>(
+            configuration.GetSection(JwtOptions.SectionName));
 
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
+        
+        services.AddSingleton<IJwtProvider, JwtProvider>();
 
         return services;
     }

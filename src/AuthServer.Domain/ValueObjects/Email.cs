@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using AuthServer.Domain.Exceptions;
 
 namespace AuthServer.Domain.ValueObjects;
 
@@ -18,12 +19,12 @@ public sealed record Email
     public static Email Create(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
-            throw new ArgumentException("Email cannot be empty.", nameof(value));
+            throw new ValidationException("Email cannot be empty.");
 
         value = value.Trim().ToLowerInvariant();
 
         if (!EmailRegex.IsMatch(value))
-            throw new ArgumentException("Invalid email address.", nameof(value));
+            throw new ValidationException("Invalid email address.");
 
         return new Email(value);
     }
