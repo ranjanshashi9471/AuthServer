@@ -4,7 +4,8 @@ using AuthServer.Contracts.Authentication;
 using AuthServer.Application.Messaging.Abstractions;
 using AuthServer.Domain.ValueObjects;
 using AuthServer.Domain.Exceptions;
-using AuthServer.Domain.Enums;
+using AuthServer.Domain.Entities;
+using AuthServer.Application.Abstractions.Security.Models;
 
 namespace AuthServer.Application.Features.Authentication.Login;
 
@@ -14,15 +15,24 @@ internal sealed class LoginCommandHandler
     private readonly IUserRepository _users;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtProvider _jwtProvider;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IRefreshTokenProvider _refreshTokenProvider;
+    private readonly IRefreshTokenRepository _refreshTokenRepository;
 
     public LoginCommandHandler(
         IUserRepository users,
         IPasswordHasher passwordHasher,
-        IJwtProvider jwtProvider)
+        IJwtProvider jwtProvider,
+        IUnitOfWork unitOfWork,
+        IRefreshTokenProvider refreshTokenProvider,
+        IRefreshTokenRepository refreshTokenRepository)
     {
         _users = users;
         _passwordHasher = passwordHasher;
         _jwtProvider = jwtProvider;
+        _unitOfWork = unitOfWork;
+        _refreshTokenProvider = refreshTokenProvider;
+        _refreshTokenRepository = refreshTokenRepository;
     }
 
     public async Task<LoginResponse> Handle(
@@ -50,11 +60,37 @@ internal sealed class LoginCommandHandler
         //     throw new BusinessRuleViolationException("User not active.");
         // }
 
-        var token = _jwtProvider.GenerateToken(
+        var accessToken = _jwtProvider.GenerateToken(
             new JwtUser(
                 user.Id.Value,
                 user.Email.Value));
 
-        return new LoginResponse(token);
+        var refreshToken = _refreshTokenProvider.Generate();
+
+        var refreshTokenHash =
+            _passwordHasher.Hash(refreshToken.Secret);
+
+        var refreshTokenEntity =
+            RefreshToken.Create(
+                refreshToken.Id,
+                user.Id,
+                refreshTokenHash.Value,
+                DateTimeOffset.UtcNow.AddDays(30));
+
+        await _refreshTokenRepository.AddAsync(
+            refreshTokenEntity,
+            cancellationToken);
+
+        var refreshTokenValue =
+            _refreshTokenProvider.BuildToken(refreshToken);
+
+        await _unitOfWork.SaveChangesAsync(
+            cancellationToken);
+
+
+
+        return new LoginResponse(
+            accessToken,
+            refreshTokenValue);
     }
 }

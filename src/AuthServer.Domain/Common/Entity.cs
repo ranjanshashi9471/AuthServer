@@ -2,6 +2,16 @@ namespace AuthServer.Domain.Common;
 
 public abstract class Entity<TId>
 {
+    public TId Id { get; protected set; } = default!;
+
+    public DateTimeOffset CreatedAt { get; protected set; }
+
+    public DateTimeOffset UpdatedAt { get; protected set; }
+
+    protected Entity()
+    {
+    }
+
     protected Entity(
         TId id,
         DateTimeOffset createdAt,
@@ -12,11 +22,6 @@ public abstract class Entity<TId>
         UpdatedAt = updatedAt;
     }
 
-    public TId Id { get; private set; }
-
-    public DateTimeOffset CreatedAt { get; private set; }
-
-    public DateTimeOffset UpdatedAt { get; private set; }
 
     protected void Touch()
     {

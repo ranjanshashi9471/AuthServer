@@ -2,6 +2,7 @@ using AuthServer.Api.Abstractions;
 using AuthServer.Application.Features.Authentication.Login;
 using AuthServer.Application.Messaging.Abstractions;
 using AuthServer.Contracts.Authentication;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 public sealed class LoginEndpoint : IEndpoint
 {
@@ -14,7 +15,7 @@ public sealed class LoginEndpoint : IEndpoint
         .WithTags("Authentication");
     }
 
-    private static async Task<IResult> HandleAsync(
+    private static async Task<Ok<LoginResponse>> HandleAsync(
         LoginRequest request,
         ICommandBus commandBus,
         CancellationToken cancellationToken)
@@ -25,6 +26,6 @@ public sealed class LoginEndpoint : IEndpoint
             command,
             cancellationToken);
 
-        return Results.Ok(response);
+        return TypedResults.Ok(response);
     }
 }

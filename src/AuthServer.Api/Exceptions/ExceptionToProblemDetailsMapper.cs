@@ -18,6 +18,24 @@ internal static class ExceptionToProblemDetailsMapper
                     Detail = validationException.Message
                 }),
 
+            UnauthorizedAccessException unauthorizedException => new ExceptionMapping(
+                StatusCodes.Status401Unauthorized,
+                new ProblemDetails
+                {
+                    Status = StatusCodes.Status401Unauthorized,
+                    Title = "Unauthorized",
+                    Detail = unauthorizedException.Message
+                }),
+
+            KeyNotFoundException notFoundException => new ExceptionMapping(
+                StatusCodes.Status404NotFound,
+                new ProblemDetails
+                {
+                    Status = StatusCodes.Status404NotFound,
+                    Title = "Resource Not Found",
+                    Detail = notFoundException.Message
+                }),
+
             BusinessRuleViolationException businessException => new ExceptionMapping(
                 StatusCodes.Status409Conflict,
                 new ProblemDetails
