@@ -1,7 +1,6 @@
+using AuthServer.Api.Extensions;
 using AuthServer.Api.Exceptions;
 using AuthServer.Application.DependencyInjection;
-using AuthServer.Application.Messaging.Abstractions;
-using AuthServer.Contracts.Authentication;
 using AuthServer.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,19 +13,11 @@ builder.Services.AddApplication();
 
 builder.Services.AddInfrastructure(builder.Configuration);
 
+builder.Services.AddAuthenticationServices(builder.Configuration);
+
 var app = builder.Build();
 
 app.UseExceptionHandler();
-
-using (var scope = app.Services.CreateScope())
-{
-    var handler = scope.ServiceProvider.GetService<
-        ICommandHandler<RegisterUserCommand, RegisterUserResponse>>();
-
-    Console.WriteLine(handler is not null
-        ? "Handler registered successfully."
-        : "Handler registration failed.");
-}
 
 if (app.Environment.IsDevelopment())
 {
@@ -34,6 +25,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
+
+app.UseAuthorization();
 
 app.MapEndpoints();
 

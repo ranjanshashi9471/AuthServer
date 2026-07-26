@@ -8,15 +8,29 @@ namespace AuthServer.Domain.Entities;
 
 public sealed class User : Entity<UserId>
 {
+    public Email Email { get; private set; } = null!;
+
+    public Username Username { get; private set; } = null!;
+
+    public PasswordHash PasswordHash { get; private set; } = null!;
+
+    public UserStatus Status { get; private set; }
+
+    private readonly List<RefreshToken> _refreshTokens = [];
+
+    private User()
+    {
+    }
+
     private User(
         UserId id,
         Email email,
         Username username,
         PasswordHash passwordHash)
-        : base(
-            id,
-            DateTimeOffset.UtcNow,
-            DateTimeOffset.UtcNow)
+    : base(
+        id,
+        DateTimeOffset.UtcNow,
+        DateTimeOffset.UtcNow)
     {
         Email = email;
         Username = username;
@@ -25,13 +39,8 @@ public sealed class User : Entity<UserId>
         Status = UserStatus.PendingVerification;
     }
 
-    public Email Email { get; private set; }
-
-    public Username Username { get; private set; }
-
-    public PasswordHash PasswordHash { get; private set; }
-
-    public UserStatus Status { get; private set; }
+    public IReadOnlyCollection<RefreshToken> RefreshTokens
+        => _refreshTokens;
 
     public static User Create(
         Email email,
