@@ -7,6 +7,8 @@ internal static class ExceptionToProblemDetailsMapper
 {
     public static ExceptionMapping Map(Exception exception)
     {
+        Console.WriteLine(exception.StackTrace);
+
         return exception switch
         {
             ValidationException validationException => new ExceptionMapping(

@@ -1,5 +1,4 @@
 using AuthServer.Api.Abstractions;
-using AuthServer.Application.Features.Authentication.Register;
 using AuthServer.Application.Messaging.Abstractions;
 using AuthServer.Contracts.Authentication;
 using Microsoft.AspNetCore.Http.HttpResults;

@@ -19,18 +19,23 @@ public static class MessagingServiceCollectionExtensions
     }
 
     private static void RegisterCommandHandlers(
-        IServiceCollection services,
-        Assembly assembly)
+    IServiceCollection services,
+    Assembly assembly)
     {
         foreach (var type in assembly.GetTypes())
         {
-            if (!type.IsClass || type.IsAbstract) continue;
+            if (!type.IsClass || type.IsAbstract)
+                continue;
 
             foreach (var implementedInterface in type.GetInterfaces())
             {
-                if (!implementedInterface.IsGenericType) continue;
+                if (!implementedInterface.IsGenericType)
+                    continue;
 
-                if (implementedInterface.GetGenericTypeDefinition() != typeof(ICommandHandler<,>))
+                var genericType = implementedInterface.GetGenericTypeDefinition();
+
+                if (genericType != typeof(ICommandHandler<,>) &&
+                    genericType != typeof(ICommandHandler<>))
                 {
                     continue;
                 }

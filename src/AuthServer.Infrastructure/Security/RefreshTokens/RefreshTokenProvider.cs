@@ -44,9 +44,9 @@ internal sealed class RefreshTokenProvider
         }
 
         if (!Guid.TryParseExact(
-                token.AsSpan(0, separator),
-                "N",
-                out var guid))
+            token.AsSpan(0, separator),
+            "N",
+            out var guid))
         {
             return false;
         }
