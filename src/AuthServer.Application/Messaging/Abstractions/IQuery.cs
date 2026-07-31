@@ -1,5 +1,6 @@
 namespace AuthServer.Application.Messaging.Abstractions;
 
-public interface ICommand
+public interface IQuery<TResult>
 {
+
 }

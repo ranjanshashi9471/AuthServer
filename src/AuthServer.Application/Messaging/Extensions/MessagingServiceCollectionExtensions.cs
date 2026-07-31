@@ -14,6 +14,7 @@ public static class MessagingServiceCollectionExtensions
             Assembly.GetExecutingAssembly());
 
         services.AddScoped<ICommandBus, Internals.CommandBus>();
+        services.AddScoped<IQueryBus, Internals.QueryBus>();
 
         return services;
     }
@@ -34,8 +35,9 @@ public static class MessagingServiceCollectionExtensions
 
                 var genericType = implementedInterface.GetGenericTypeDefinition();
 
-                if (genericType != typeof(ICommandHandler<,>) &&
-                    genericType != typeof(ICommandHandler<>))
+                if (genericType != typeof(ICommandHandler<,>)
+                && genericType != typeof(ICommandHandler<>)
+                && genericType != typeof(IQueryHandler<,>))
                 {
                     continue;
                 }

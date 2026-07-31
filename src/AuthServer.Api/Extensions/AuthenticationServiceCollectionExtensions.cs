@@ -1,4 +1,6 @@
 using System.Text;
+using AuthServer.Api.Authentication;
+using AuthServer.Application.Abstractions.Security;
 using AuthServer.Infrastructure.Security.Jwt;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -11,6 +13,10 @@ public static class AuthenticationServiceCollectionExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        services.AddHttpContextAccessor();
+
+        services.AddScoped<ICurrentUser, CurrentUser>();
+
         var jwtOptions = configuration
             .GetSection(JwtOptions.SectionName)
             .Get<JwtOptions>()
