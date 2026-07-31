@@ -1,5 +1,5 @@
-using AuthServer.Api.Extensions;
 using AuthServer.Api.Exceptions;
+using AuthServer.Api.Extensions;
 using AuthServer.Application.DependencyInjection;
 using AuthServer.Infrastructure;
 

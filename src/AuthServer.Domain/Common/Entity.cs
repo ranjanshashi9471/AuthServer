@@ -8,20 +8,14 @@ public abstract class Entity<TId>
 
     public DateTimeOffset UpdatedAt { get; protected set; }
 
-    protected Entity()
-    {
-    }
+    protected Entity() { }
 
-    protected Entity(
-        TId id,
-        DateTimeOffset createdAt,
-        DateTimeOffset updatedAt)
+    protected Entity(TId id, DateTimeOffset createdAt, DateTimeOffset updatedAt)
     {
         Id = id;
         CreatedAt = createdAt;
         UpdatedAt = updatedAt;
     }
-
 
     protected void Touch()
     {

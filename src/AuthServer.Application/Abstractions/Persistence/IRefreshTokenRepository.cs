@@ -5,13 +5,12 @@ namespace AuthServer.Application.Abstractions.Persistence;
 
 public interface IRefreshTokenRepository
 {
-    Task AddAsync(
-        RefreshToken refreshToken,
-        CancellationToken cancellationToken = default);
+    Task AddAsync(RefreshToken refreshToken, CancellationToken cancellationToken = default);
 
     Task<RefreshToken?> GetByIdAsync(
-    RefreshTokenId id,
-    CancellationToken cancellationToken = default);
+        RefreshTokenId id,
+        CancellationToken cancellationToken = default
+    );
 
     void Update(RefreshToken refreshToken);
 }

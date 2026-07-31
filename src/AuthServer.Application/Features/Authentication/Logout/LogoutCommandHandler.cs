@@ -6,8 +6,7 @@ using AuthServer.Domain.ValueObjects;
 
 namespace AuthServer.Application.Features.Authentication.Logout;
 
-internal sealed class LogoutCommandHandler
-    : ICommandHandler<LogoutCommand>
+internal sealed class LogoutCommandHandler : ICommandHandler<LogoutCommand>
 {
     private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly IRefreshTokenProvider _refreshTokenProvider;
@@ -18,7 +17,8 @@ internal sealed class LogoutCommandHandler
         IRefreshTokenRepository refreshTokenRepository,
         IRefreshTokenProvider refreshTokenProvider,
         IPasswordHasher passwordHasher,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork
+    )
     {
         _refreshTokenRepository = refreshTokenRepository;
         _refreshTokenProvider = refreshTokenProvider;
@@ -26,38 +26,34 @@ internal sealed class LogoutCommandHandler
         _unitOfWork = unitOfWork;
     }
 
-    public async Task Handle(
-        LogoutCommand command,
-        CancellationToken cancellationToken)
+    public async Task Handle(LogoutCommand command, CancellationToken cancellationToken)
     {
         Console.WriteLine("Command handler!!");
 
-        if (!_refreshTokenProvider.TryParse(
+        if (
+            !_refreshTokenProvider.TryParse(
                 command.RefreshToken,
                 out var refreshTokenId,
-                out var secret))
+                out var secret
+            )
+        )
         {
-            throw new BusinessRuleViolationException(
-                "Invalid refresh token.");
+            throw new BusinessRuleViolationException("Invalid refresh token.");
         }
 
-        var refreshToken =
-            await _refreshTokenRepository.GetByIdAsync(
-                refreshTokenId,
-                cancellationToken);
+        var refreshToken = await _refreshTokenRepository.GetByIdAsync(
+            refreshTokenId,
+            cancellationToken
+        );
 
         if (refreshToken is null)
         {
-            throw new BusinessRuleViolationException(
-                "Invalid refresh token.");
+            throw new BusinessRuleViolationException("Invalid refresh token.");
         }
 
-        if (!_passwordHasher.Verify(
-                secret,
-                PasswordHash.From(refreshToken.TokenHash)))
+        if (!_passwordHasher.Verify(secret, PasswordHash.From(refreshToken.TokenHash)))
         {
-            throw new BusinessRuleViolationException(
-                "Invalid refresh token.");
+            throw new BusinessRuleViolationException("Invalid refresh token.");
         }
 
         if (!refreshToken.IsActive)
@@ -69,7 +65,6 @@ internal sealed class LogoutCommandHandler
 
         _refreshTokenRepository.Update(refreshToken);
 
-        await _unitOfWork.SaveChangesAsync(
-            cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

@@ -18,19 +18,10 @@ public sealed class User : Entity<UserId>
 
     private readonly List<RefreshToken> _refreshTokens = [];
 
-    private User()
-    {
-    }
+    private User() { }
 
-    private User(
-        UserId id,
-        Email email,
-        Username username,
-        PasswordHash passwordHash)
-    : base(
-        id,
-        DateTimeOffset.UtcNow,
-        DateTimeOffset.UtcNow)
+    private User(UserId id, Email email, Username username, PasswordHash passwordHash)
+        : base(id, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow)
     {
         Email = email;
         Username = username;
@@ -39,26 +30,17 @@ public sealed class User : Entity<UserId>
         Status = UserStatus.PendingVerification;
     }
 
-    public IReadOnlyCollection<RefreshToken> RefreshTokens
-        => _refreshTokens;
+    public IReadOnlyCollection<RefreshToken> RefreshTokens => _refreshTokens;
 
-    public static User Create(
-        Email email,
-        Username username,
-        PasswordHash passwordHash)
+    public static User Create(Email email, Username username, PasswordHash passwordHash)
     {
-        return new User(
-            UserId.New(),
-            email,
-            username,
-            passwordHash);
+        return new User(UserId.New(), email, username, passwordHash);
     }
 
     public void VerifyEmail()
     {
         if (Status != UserStatus.PendingVerification)
-            throw new BusinessRuleViolationException(
-                "User is not pending email verification.");
+            throw new BusinessRuleViolationException("User is not pending email verification.");
 
         Status = UserStatus.Active;
 
@@ -68,8 +50,7 @@ public sealed class User : Entity<UserId>
     public void Lock()
     {
         if (Status != UserStatus.Active)
-            throw new BusinessRuleViolationException(
-                "Only active users can be locked.");
+            throw new BusinessRuleViolationException("Only active users can be locked.");
 
         Status = UserStatus.Locked;
 
@@ -79,8 +60,7 @@ public sealed class User : Entity<UserId>
     public void Unlock()
     {
         if (Status != UserStatus.Locked)
-            throw new BusinessRuleViolationException(
-                "User is not locked.");
+            throw new BusinessRuleViolationException("User is not locked.");
 
         Status = UserStatus.Active;
 
@@ -90,8 +70,7 @@ public sealed class User : Entity<UserId>
     public void Disable()
     {
         if (Status == UserStatus.Disabled)
-            throw new BusinessRuleViolationException(
-                $"User '{Id}' is already disabled.");
+            throw new BusinessRuleViolationException($"User '{Id}' is already disabled.");
 
         Status = UserStatus.Disabled;
 
@@ -107,6 +86,4 @@ public sealed class User : Entity<UserId>
 
         Touch();
     }
-
-
 }

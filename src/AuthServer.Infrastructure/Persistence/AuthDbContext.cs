@@ -7,9 +7,7 @@ namespace AuthServer.Infrastructure.Persistence;
 public sealed class AuthDbContext : DbContext, IUnitOfWork
 {
     public AuthDbContext(DbContextOptions<AuthDbContext> options)
-        : base(options)
-    {
-    }
+        : base(options) { }
 
     public DbSet<User> Users => Set<User>();
 

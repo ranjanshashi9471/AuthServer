@@ -9,24 +9,20 @@ internal sealed class CurrentUser : ICurrentUser
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public CurrentUser(
-        IHttpContextAccessor httpContextAccessor)
+    public CurrentUser(IHttpContextAccessor httpContextAccessor)
     {
         _httpContextAccessor = httpContextAccessor;
     }
 
-    private ClaimsPrincipal? Principal =>
-        _httpContextAccessor.HttpContext?.User;
+    private ClaimsPrincipal? Principal => _httpContextAccessor.HttpContext?.User;
 
-    public bool IsAuthenticated =>
-        Principal?.Identity?.IsAuthenticated == true;
+    public bool IsAuthenticated => Principal?.Identity?.IsAuthenticated == true;
 
     public UserId? UserId
     {
         get
         {
-            var value = Principal?.FindFirstValue(
-                JwtRegisteredClaimNames.Sub);
+            var value = Principal?.FindFirstValue(JwtRegisteredClaimNames.Sub);
 
             if (!Guid.TryParse(value, out var id))
             {
@@ -37,7 +33,5 @@ internal sealed class CurrentUser : ICurrentUser
         }
     }
 
-    public string? Email =>
-        Principal?.FindFirstValue(
-            JwtRegisteredClaimNames.Email);
+    public string? Email => Principal?.FindFirstValue(JwtRegisteredClaimNames.Email);
 }

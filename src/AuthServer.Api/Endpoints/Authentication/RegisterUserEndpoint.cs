@@ -11,11 +11,9 @@ public sealed class RegisterUserEndpoint : IEndpoint
 
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
-        app.MapPost(
-            "/auth/register",
-            HandleAsync)
-        .WithName("RegisterUser")
-        .WithTags("Authentication");
+        app.MapPost("/auth/register", HandleAsync)
+            .WithName("RegisterUser")
+            .WithTags("Authentication");
     }
 
     #endregion
@@ -25,11 +23,10 @@ public sealed class RegisterUserEndpoint : IEndpoint
     private static async Task<Created<RegisterUserResponse>> HandleAsync(
         RegisterUserRequest request,
         ICommandBus commandBus,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
-        var response = await commandBus.Send(
-            new RegisterUserCommand(request),
-            cancellationToken);
+        var response = await commandBus.Send(new RegisterUserCommand(request), cancellationToken);
 
         return TypedResults.Created(string.Empty, response);
     }

@@ -12,8 +12,10 @@ internal sealed class QueryBus : IQueryBus
         _serviceProvider = serviceProvider;
     }
 
-    public async Task<TResult> Send<TResult>(IQuery<TResult> query,
-        CancellationToken cancellationToken = default)
+    public async Task<TResult> Send<TResult>(
+        IQuery<TResult> query,
+        CancellationToken cancellationToken = default
+    )
     {
         var queryType = query.GetType();
 
@@ -21,17 +23,13 @@ internal sealed class QueryBus : IQueryBus
 
         var handler = _serviceProvider.GetRequiredService(handlerInterface);
 
-        var handleMethod = handlerInterface.GetMethod(nameof(IQueryHandler<IQuery<TResult>, TResult>.Handle))
+        var handleMethod =
+            handlerInterface.GetMethod(nameof(IQueryHandler<IQuery<TResult>, TResult>.Handle))
             ?? throw new InvalidOperationException("Handle method not found.");
 
-        var task = handleMethod.Invoke(
-            handler,
-            new object[]{
-                query,
-                cancellationToken
-            })
-            as Task<TResult>
-                ?? throw new InvalidOperationException("Invalid handler.");
+        var task =
+            handleMethod.Invoke(handler, new object[] { query, cancellationToken }) as Task<TResult>
+            ?? throw new InvalidOperationException("Invalid handler.");
 
         return await task;
     }

@@ -17,7 +17,9 @@ public sealed class RegisterUserCommandHandler
 
     public RegisterUserCommandHandler(
         IUserRepository userRepository,
-        IPasswordHasher passwordHasher, IUnitOfWork unitOfWork)
+        IPasswordHasher passwordHasher,
+        IUnitOfWork unitOfWork
+    )
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
@@ -25,8 +27,9 @@ public sealed class RegisterUserCommandHandler
     }
 
     public async Task<RegisterUserResponse> Handle(
-    RegisterUserCommand command,
-    CancellationToken cancellationToken = default)
+        RegisterUserCommand command,
+        CancellationToken cancellationToken = default
+    )
     {
         var email = Email.Create(command.Request.Email);
 
@@ -35,7 +38,8 @@ public sealed class RegisterUserCommandHandler
         if (await _userRepository.ExistsByEmailAsync(email, cancellationToken))
         {
             throw new BusinessRuleViolationException(
-                $"A user with email '{email}' already exists.");
+                $"A user with email '{email}' already exists."
+            );
         }
 
         var passwordHash = _passwordHasher.Hash(command.Request.Password);
@@ -44,11 +48,8 @@ public sealed class RegisterUserCommandHandler
 
         await _userRepository.AddAsync(user, cancellationToken);
 
-        await _unitOfWork.SaveChangesAsync(
-            cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new RegisterUserResponse(user.Id.Value);
     }
-
-
 }

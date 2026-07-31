@@ -9,8 +9,5 @@ public interface IRefreshTokenProvider
 
     string BuildToken(RefreshTokenData refreshToken);
 
-    bool TryParse(
-        string token,
-        out RefreshTokenId refreshTokenId,
-        out string secret);
+    bool TryParse(string token, out RefreshTokenId refreshTokenId, out string secret);
 }

@@ -13,7 +13,8 @@ namespace AuthServer.Infrastructure.Persistence.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_refresh_tokens_UserId",
                 table: "refresh_tokens",
-                column: "UserId");
+                column: "UserId"
+            );
 
             migrationBuilder.AddForeignKey(
                 name: "FK_refresh_tokens_users_UserId",
@@ -21,7 +22,8 @@ namespace AuthServer.Infrastructure.Persistence.Migrations
                 column: "UserId",
                 principalTable: "users",
                 principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
+                onDelete: ReferentialAction.Cascade
+            );
         }
 
         /// <inheritdoc />
@@ -29,11 +31,10 @@ namespace AuthServer.Infrastructure.Persistence.Migrations
         {
             migrationBuilder.DropForeignKey(
                 name: "FK_refresh_tokens_users_UserId",
-                table: "refresh_tokens");
+                table: "refresh_tokens"
+            );
 
-            migrationBuilder.DropIndex(
-                name: "IX_refresh_tokens_UserId",
-                table: "refresh_tokens");
+            migrationBuilder.DropIndex(name: "IX_refresh_tokens_UserId", table: "refresh_tokens");
         }
     }
 }

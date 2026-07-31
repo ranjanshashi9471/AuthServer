@@ -15,33 +15,20 @@ public sealed class UserRepository : IUserRepository
         _context = context;
     }
 
-    public Task<User?> GetByIdAsync(
-        UserId id,
-        CancellationToken cancellationToken = default)
-        => _context.Users
-        .SingleOrDefaultAsync(
-            user => user.Id == id, 
-            cancellationToken);
+    public Task<User?> GetByIdAsync(UserId id, CancellationToken cancellationToken = default) =>
+        _context.Users.SingleOrDefaultAsync(user => user.Id == id, cancellationToken);
 
     public Task<User?> GetByEmailAsync(
         Email email,
-        CancellationToken cancellationToken = default)
-        => _context.Users
-            .SingleOrDefaultAsync(
-                user => user.Email == email,
-                cancellationToken);
+        CancellationToken cancellationToken = default
+    ) => _context.Users.SingleOrDefaultAsync(user => user.Email == email, cancellationToken);
 
     public Task<bool> ExistsByEmailAsync(
         Email email,
-        CancellationToken cancellationToken = default)
-        => _context.Users
-            .AnyAsync(
-                user => user.Email == email,
-                cancellationToken);
+        CancellationToken cancellationToken = default
+    ) => _context.Users.AnyAsync(user => user.Email == email, cancellationToken);
 
-    public async Task AddAsync(
-        User user,
-        CancellationToken cancellationToken = default)
+    public async Task AddAsync(User user, CancellationToken cancellationToken = default)
     {
         await _context.Users.AddAsync(user, cancellationToken);
     }

@@ -15,14 +15,9 @@ public sealed class PasswordHasher : IPasswordHasher
         return PasswordHash.From(hash);
     }
 
-    public bool Verify(
-        string password,
-        PasswordHash passwordHash)
+    public bool Verify(string password, PasswordHash passwordHash)
     {
-        var result = Hasher.VerifyHashedPassword(
-            new object(),
-            passwordHash.Value,
-            password);
+        var result = Hasher.VerifyHashedPassword(new object(), passwordHash.Value, password);
 
         return result != PasswordVerificationResult.Failed;
     }

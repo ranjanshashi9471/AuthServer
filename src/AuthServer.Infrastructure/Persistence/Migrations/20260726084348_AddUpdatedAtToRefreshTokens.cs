@@ -16,15 +16,17 @@ namespace AuthServer.Infrastructure.Persistence.Migrations
                 table: "refresh_tokens",
                 type: "timestamp with time zone",
                 nullable: false,
-                defaultValue: new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)));
+                defaultValue: new DateTimeOffset(
+                    new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                    new TimeSpan(0, 0, 0, 0, 0)
+                )
+            );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "UpdatedAt",
-                table: "refresh_tokens");
+            migrationBuilder.DropColumn(name: "UpdatedAt", table: "refresh_tokens");
         }
     }
 }

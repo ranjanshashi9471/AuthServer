@@ -11,15 +11,15 @@ public static class AuthenticationServiceCollectionExtensions
 {
     public static IServiceCollection AddAuthenticationServices(
         this IServiceCollection services,
-        IConfiguration configuration)
+        IConfiguration configuration
+    )
     {
         services.AddHttpContextAccessor();
 
         services.AddScoped<ICurrentUser, CurrentUser>();
 
-        var jwtOptions = configuration
-            .GetSection(JwtOptions.SectionName)
-            .Get<JwtOptions>()
+        var jwtOptions =
+            configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
             ?? throw new InvalidOperationException("JWT configuration is missing.");
 
         services
@@ -36,11 +36,12 @@ public static class AuthenticationServiceCollectionExtensions
 
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(jwtOptions.SecretKey)),
+                        Encoding.UTF8.GetBytes(jwtOptions.SecretKey)
+                    ),
 
                     ValidateLifetime = true,
 
-                    ClockSkew = TimeSpan.Zero
+                    ClockSkew = TimeSpan.Zero,
                 };
             });
 

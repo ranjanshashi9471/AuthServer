@@ -15,20 +15,20 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
-        IConfiguration configuration)
+        IConfiguration configuration
+    )
     {
-        var connectionString = configuration.GetConnectionString("DefaultConnection")
+        var connectionString =
+            configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException(
-                "Connection string 'DefaultConnection' was not found.");
+                "Connection string 'DefaultConnection' was not found."
+            );
 
-        services.AddDbContext<AuthDbContext>(options =>
-            options.UseNpgsql(connectionString));
+        services.AddDbContext<AuthDbContext>(options => options.UseNpgsql(connectionString));
 
-        services.AddScoped<IUnitOfWork>(sp =>
-            sp.GetRequiredService<AuthDbContext>());
+        services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AuthDbContext>());
 
-        services.Configure<JwtOptions>(
-            configuration.GetSection(JwtOptions.SectionName));
+        services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
 
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
 

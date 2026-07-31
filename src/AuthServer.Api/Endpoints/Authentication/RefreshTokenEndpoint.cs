@@ -9,9 +9,8 @@ public sealed class RefreshEndpoint : IEndpoint
 {
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapPost(
-                "/auth/refresh",
-                HandleAsync)
+        endpoints
+            .MapPost("/auth/refresh", HandleAsync)
             .WithName("Refresh")
             .WithTags("Authentication");
     }
@@ -19,14 +18,12 @@ public sealed class RefreshEndpoint : IEndpoint
     private static async Task<IResult> HandleAsync(
         RefreshRequest request,
         ICommandBus commandBus,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
-        var command = new RefreshCommand(
-            request.RefreshToken);
+        var command = new RefreshCommand(request.RefreshToken);
 
-        var response = await commandBus.Send(
-            command,
-            cancellationToken);
+        var response = await commandBus.Send(command, cancellationToken);
 
         return Results.Ok(response);
     }

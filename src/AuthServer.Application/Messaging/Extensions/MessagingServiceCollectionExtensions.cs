@@ -6,12 +6,9 @@ namespace AuthServer.Application.Messaging.Extensions;
 
 public static class MessagingServiceCollectionExtensions
 {
-    public static IServiceCollection AddMessaging(
-        this IServiceCollection services)
+    public static IServiceCollection AddMessaging(this IServiceCollection services)
     {
-        RegisterCommandHandlers(
-            services,
-            Assembly.GetExecutingAssembly());
+        RegisterCommandHandlers(services, Assembly.GetExecutingAssembly());
 
         services.AddScoped<ICommandBus, Internals.CommandBus>();
         services.AddScoped<IQueryBus, Internals.QueryBus>();
@@ -19,9 +16,7 @@ public static class MessagingServiceCollectionExtensions
         return services;
     }
 
-    private static void RegisterCommandHandlers(
-    IServiceCollection services,
-    Assembly assembly)
+    private static void RegisterCommandHandlers(IServiceCollection services, Assembly assembly)
     {
         foreach (var type in assembly.GetTypes())
         {
@@ -35,16 +30,16 @@ public static class MessagingServiceCollectionExtensions
 
                 var genericType = implementedInterface.GetGenericTypeDefinition();
 
-                if (genericType != typeof(ICommandHandler<,>)
-                && genericType != typeof(ICommandHandler<>)
-                && genericType != typeof(IQueryHandler<,>))
+                if (
+                    genericType != typeof(ICommandHandler<,>)
+                    && genericType != typeof(ICommandHandler<>)
+                    && genericType != typeof(IQueryHandler<,>)
+                )
                 {
                     continue;
                 }
 
-                services.AddScoped(
-                    implementedInterface,
-                    type);
+                services.AddScoped(implementedInterface, type);
             }
         }
     }

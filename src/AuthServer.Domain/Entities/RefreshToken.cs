@@ -17,19 +17,15 @@ public sealed class RefreshToken : Entity<RefreshTokenId>
 
     public User User { get; private set; } = null!;
 
-    private RefreshToken()
-    {
-    }
+    private RefreshToken() { }
 
     private RefreshToken(
         RefreshTokenId id,
         UserId userId,
         string tokenHash,
-        DateTimeOffset expiresAt)
-        : base(
-            id,
-            DateTimeOffset.UtcNow,
-            DateTimeOffset.UtcNow)
+        DateTimeOffset expiresAt
+    )
+        : base(id, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow)
     {
         UserId = userId;
         TokenHash = tokenHash;
@@ -40,17 +36,13 @@ public sealed class RefreshToken : Entity<RefreshTokenId>
         RefreshTokenId id,
         UserId userId,
         string tokenHash,
-        DateTimeOffset expiresAt)
+        DateTimeOffset expiresAt
+    )
     {
-        return new RefreshToken(
-            id,
-            userId,
-            tokenHash,
-            expiresAt);
+        return new RefreshToken(id, userId, tokenHash, expiresAt);
     }
 
-    public void Revoke(
-        RefreshTokenId? replacedByTokenId = null)
+    public void Revoke(RefreshTokenId? replacedByTokenId = null)
     {
         if (RevokedAt is not null)
             return;
@@ -61,12 +53,9 @@ public sealed class RefreshToken : Entity<RefreshTokenId>
         Touch();
     }
 
-    public bool IsExpired =>
-        DateTimeOffset.UtcNow >= ExpiresAt;
+    public bool IsExpired => DateTimeOffset.UtcNow >= ExpiresAt;
 
-    public bool IsRevoked =>
-        RevokedAt is not null;
+    public bool IsRevoked => RevokedAt is not null;
 
-    public bool IsActive =>
-        !IsExpired && !IsRevoked;
+    public bool IsActive => !IsExpired && !IsRevoked;
 }

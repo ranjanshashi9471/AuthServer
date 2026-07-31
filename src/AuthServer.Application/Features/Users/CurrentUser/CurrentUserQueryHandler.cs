@@ -18,9 +18,14 @@ internal sealed class CurrentUserQueryHandler : IQueryHandler<CurrentUserQuery, 
         _user = userRepository;
     }
 
-    public async Task<CurrentUserResponse> Handle(CurrentUserQuery query, CancellationToken cancellationToken)
+    public async Task<CurrentUserResponse> Handle(
+        CurrentUserQuery query,
+        CancellationToken cancellationToken
+    )
     {
-        var userId = _currentUser.UserId ?? throw new BusinessRuleViolationException("User is not authenticated.");
+        var userId =
+            _currentUser.UserId
+            ?? throw new BusinessRuleViolationException("User is not authenticated.");
 
         var user = await _user.GetByIdAsync(userId, cancellationToken);
 
