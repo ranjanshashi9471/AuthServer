@@ -32,6 +32,18 @@ internal sealed class RefreshTokenRepository : IRefreshTokenRepository
             .SingleOrDefaultAsync(rt => rt.Id == id, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<RefreshToken>> GetActiveByUserIdAsync(
+        UserId userId,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return await _context
+            .RefreshTokens.Where(rt =>
+                rt.UserId == userId && rt.RevokedAt == null && rt.ExpiresAt > DateTimeOffset.UtcNow
+            )
+            .ToListAsync(cancellationToken);
+    }
+
     public void Update(RefreshToken refreshToken)
     {
         _context.RefreshTokens.Update(refreshToken);

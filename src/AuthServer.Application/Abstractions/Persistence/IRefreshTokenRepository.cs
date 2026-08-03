@@ -13,4 +13,9 @@ public interface IRefreshTokenRepository
     );
 
     void Update(RefreshToken refreshToken);
+
+    Task<IReadOnlyList<RefreshToken>> GetActiveByUserIdAsync(
+        UserId userId,
+        CancellationToken cancellationToken = default
+    );
 }
