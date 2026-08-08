@@ -1,5 +1,6 @@
 using AuthServer.Domain.Entities;
 using AuthServer.Domain.ValueObjects.Identifiers;
+using AuthServer.Infrastructure.Persistence.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -15,11 +16,9 @@ internal sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<Refre
 
         builder
             .Property(rt => rt.Id)
-            .HasConversion(id => id.Value, value => RefreshTokenId.From(value));
+            .HasStronglyTypedIdConversion(value => RefreshTokenId.From(value));
 
-        builder
-            .Property(rt => rt.UserId)
-            .HasConversion(id => id.Value, value => UserId.From(value));
+        builder.Property(rt => rt.UserId).HasStronglyTypedIdConversion(value => UserId.From(value));
 
         builder.Property(rt => rt.TokenHash).HasMaxLength(512).IsRequired();
 

@@ -1,9 +1,12 @@
+using AuthServer.Application.Abstractions.Communication.Notifications;
 using AuthServer.Application.Abstractions.Persistence;
 using AuthServer.Application.Abstractions.Security;
+using AuthServer.Infrastructure.Communication.Notifications;
 using AuthServer.Infrastructure.Persistence;
 using AuthServer.Infrastructure.Persistence.Repositories;
 using AuthServer.Infrastructure.Security;
 using AuthServer.Infrastructure.Security.Jwt;
+using AuthServer.Infrastructure.Security.PasswordResetTokens;
 using AuthServer.Infrastructure.Security.RefreshTokens;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -30,16 +33,20 @@ public static class DependencyInjection
 
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
 
-        services.AddSingleton<IPasswordHasher, PasswordHasher>();
-
+        // Security / Token Providers
         services.AddSingleton<IJwtProvider, JwtProvider>();
-
-        services.AddScoped<IUserRepository, UserRepository>();
-
-        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
-
+        services.AddSingleton<IPasswordHasher, PasswordHasher>();
+        services.AddSingleton<ISecretHasher, SecretHasher>();
         services.AddSingleton<IRefreshTokenProvider, RefreshTokenProvider>();
+        services.AddSingleton<IPasswordResetTokenProvider, PasswordResetTokenProvider>();
 
+        // Repositories
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
+
+        // Communications / Notifications
+        services.AddTransient<INotificationService, EmailNotificationService>();
         return services;
     }
 }

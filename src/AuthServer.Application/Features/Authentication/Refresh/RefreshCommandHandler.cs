@@ -11,21 +11,21 @@ using AuthServer.Domain.ValueObjects;
 internal sealed class RefreshCommandHandler : ICommandHandler<RefreshCommand, RefreshResponse>
 {
     private readonly IRefreshTokenRepository _refreshTokenRepository;
-    private readonly IPasswordHasher _passwordHasher;
+    private readonly ISecretHasher _secretHasher;
     private readonly IJwtProvider _jwtProvider;
     private readonly IRefreshTokenProvider _refreshTokenProvider;
     private readonly IUnitOfWork _unitOfWork;
 
     public RefreshCommandHandler(
         IRefreshTokenRepository refreshTokenRepository,
-        IPasswordHasher passwordHasher,
+        ISecretHasher secretHasher,
         IJwtProvider jwtProvider,
         IRefreshTokenProvider refreshTokenProvider,
         IUnitOfWork unitOfWork
     )
     {
         _refreshTokenRepository = refreshTokenRepository;
-        _passwordHasher = passwordHasher;
+        _secretHasher = secretHasher;
         _jwtProvider = jwtProvider;
         _refreshTokenProvider = refreshTokenProvider;
         _unitOfWork = unitOfWork;
@@ -62,7 +62,7 @@ internal sealed class RefreshCommandHandler : ICommandHandler<RefreshCommand, Re
             throw new BusinessRuleViolationException("Refresh token has expired or been revoked.");
         }
 
-        if (!_passwordHasher.Verify(secret, PasswordHash.From(refreshToken.TokenHash)))
+        if (!_secretHasher.Verify(secret, refreshToken.TokenHash))
         {
             throw new BusinessRuleViolationException("Invalid refresh token.");
         }
@@ -71,12 +71,12 @@ internal sealed class RefreshCommandHandler : ICommandHandler<RefreshCommand, Re
 
         var newRefreshToken = _refreshTokenProvider.Generate();
 
-        var newRefreshTokenHash = _passwordHasher.Hash(newRefreshToken.Secret);
+        var newRefreshTokenHash = _secretHasher.Hash(newRefreshToken.Secret);
 
         var newRefreshTokenEntity = RefreshToken.Create(
             newRefreshToken.Id,
             user.Id,
-            newRefreshTokenHash.Value,
+            newRefreshTokenHash,
             DateTimeOffset.UtcNow.AddDays(30)
         );
 
