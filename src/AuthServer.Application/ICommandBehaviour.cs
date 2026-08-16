@@ -6,5 +6,6 @@ public interface ICommandBehavior<TCommand, TResult>
     Task<TResult> Handle(
         TCommand command,
         CancellationToken cancellationToken,
-        Func<Task<TResult>> next);
+        Func<Task<TResult>> next
+    );
 }

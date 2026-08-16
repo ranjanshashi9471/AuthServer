@@ -5,8 +5,7 @@ using AuthServer.Domain.ValueObjects.Identifiers;
 
 namespace AuthServer.Infrastructure.Security.RefreshTokens;
 
-internal sealed class RefreshTokenProvider
-    : IRefreshTokenProvider
+internal sealed class RefreshTokenProvider : IRefreshTokenProvider
 {
     private const char Separator = '.';
 
@@ -16,37 +15,27 @@ internal sealed class RefreshTokenProvider
 
         RandomNumberGenerator.Fill(bytes);
 
-        return new RefreshTokenData(
-            RefreshTokenId.New(),
-            Convert.ToHexString(bytes));
+        return new RefreshTokenData(RefreshTokenId.New(), Convert.ToHexString(bytes));
     }
 
-    public string BuildToken(
-        RefreshTokenData refreshToken)
+    public string BuildToken(RefreshTokenData refreshToken)
     {
         return $"{refreshToken.Id.Value:N}{Separator}{refreshToken.Secret}";
     }
 
-    public bool TryParse(
-        string token,
-        out RefreshTokenId refreshTokenId,
-        out string secret)
+    public bool TryParse(string token, out RefreshTokenId refreshTokenId, out string secret)
     {
         refreshTokenId = default!;
         secret = string.Empty;
 
         var separator = token.IndexOf(Separator);
 
-        if (separator <= 0 ||
-            separator == token.Length - 1)
+        if (separator <= 0 || separator == token.Length - 1)
         {
             return false;
         }
 
-        if (!Guid.TryParseExact(
-                token.AsSpan(0, separator),
-                "N",
-                out var guid))
+        if (!Guid.TryParseExact(token.AsSpan(0, separator), "N", out var guid))
         {
             return false;
         }

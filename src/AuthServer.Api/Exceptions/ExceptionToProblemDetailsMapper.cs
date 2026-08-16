@@ -15,17 +15,19 @@ internal static class ExceptionToProblemDetailsMapper
                 {
                     Status = StatusCodes.Status400BadRequest,
                     Title = "Validation Failed",
-                    Detail = validationException.Message
-                }),
+                    Detail = validationException.Message,
+                }
+            ),
 
-            UnauthorizedAccessException unauthorizedException => new ExceptionMapping(
+            AuthenticationException authenticationException => new ExceptionMapping(
                 StatusCodes.Status401Unauthorized,
                 new ProblemDetails
                 {
                     Status = StatusCodes.Status401Unauthorized,
                     Title = "Unauthorized",
-                    Detail = unauthorizedException.Message
-                }),
+                    Detail = authenticationException.Message,
+                }
+            ),
 
             KeyNotFoundException notFoundException => new ExceptionMapping(
                 StatusCodes.Status404NotFound,
@@ -33,8 +35,9 @@ internal static class ExceptionToProblemDetailsMapper
                 {
                     Status = StatusCodes.Status404NotFound,
                     Title = "Resource Not Found",
-                    Detail = notFoundException.Message
-                }),
+                    Detail = notFoundException.Message,
+                }
+            ),
 
             BusinessRuleViolationException businessException => new ExceptionMapping(
                 StatusCodes.Status409Conflict,
@@ -42,8 +45,9 @@ internal static class ExceptionToProblemDetailsMapper
                 {
                     Status = StatusCodes.Status409Conflict,
                     Title = "Business Rule Violation",
-                    Detail = businessException.Message
-                }),
+                    Detail = businessException.Message,
+                }
+            ),
 
             _ => new ExceptionMapping(
                 StatusCodes.Status500InternalServerError,
@@ -51,8 +55,9 @@ internal static class ExceptionToProblemDetailsMapper
                 {
                     Status = StatusCodes.Status500InternalServerError,
                     Title = "Internal Server Error",
-                    Detail = "An unexpected error occurred."
-                })
+                    Detail = "An unexpected error occurred.",
+                }
+            ),
         };
     }
 }

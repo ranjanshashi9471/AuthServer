@@ -1,10 +1,7 @@
 namespace AuthServer.Domain.Exceptions;
 
-public sealed class BusinessRuleViolationException
-    : DomainException
+public sealed class BusinessRuleViolationException : DomainException
 {
     public BusinessRuleViolationException(string message)
-        : base(message)
-    {
-    }
+        : base(message) { }
 }

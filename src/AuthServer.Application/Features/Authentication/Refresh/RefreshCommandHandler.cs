@@ -6,26 +6,25 @@ using AuthServer.Application.Messaging.Abstractions;
 using AuthServer.Contracts.Authentication.Refresh;
 using AuthServer.Domain.Entities;
 using AuthServer.Domain.Exceptions;
-using AuthServer.Domain.ValueObjects;
 
-internal sealed class RefreshCommandHandler
-    : ICommandHandler<RefreshCommand, RefreshResponse>
+internal sealed class RefreshCommandHandler : ICommandHandler<RefreshCommand, RefreshResponse>
 {
     private readonly IRefreshTokenRepository _refreshTokenRepository;
-    private readonly IPasswordHasher _passwordHasher;
+    private readonly ISecretHasher _secretHasher;
     private readonly IJwtProvider _jwtProvider;
     private readonly IRefreshTokenProvider _refreshTokenProvider;
     private readonly IUnitOfWork _unitOfWork;
 
     public RefreshCommandHandler(
         IRefreshTokenRepository refreshTokenRepository,
-        IPasswordHasher passwordHasher,
+        ISecretHasher secretHasher,
         IJwtProvider jwtProvider,
         IRefreshTokenProvider refreshTokenProvider,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork
+    )
     {
         _refreshTokenRepository = refreshTokenRepository;
-        _passwordHasher = passwordHasher;
+        _secretHasher = secretHasher;
         _jwtProvider = jwtProvider;
         _refreshTokenProvider = refreshTokenProvider;
         _unitOfWork = unitOfWork;
@@ -33,73 +32,81 @@ internal sealed class RefreshCommandHandler
 
     public async Task<RefreshResponse> Handle(
         RefreshCommand command,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
-        if (!_refreshTokenProvider.TryParse(
+        if (
+            !_refreshTokenProvider.TryParse(
                 command.RefreshToken,
                 out var refreshTokenId,
-                out var secret))
+                out var secret
+            )
+        )
         {
-            throw new BusinessRuleViolationException(
-                "Invalid refresh token.");
+            throw new BusinessRuleViolationException("Invalid refresh token.");
         }
 
         var refreshToken = await _refreshTokenRepository.GetByIdAsync(
             refreshTokenId,
-            cancellationToken);
+            cancellationToken
+        );
 
         if (refreshToken is null)
         {
-            throw new BusinessRuleViolationException(
-                "Invalid refresh token.");
+            throw new BusinessRuleViolationException("Invalid refresh token.");
         }
 
-        if (!refreshToken.IsActive)
+        if (!_secretHasher.Verify(secret, refreshToken.TokenHash))
         {
-            throw new BusinessRuleViolationException(
-                "Refresh token has expired or been revoked.");
+            throw new BusinessRuleViolationException("Invalid refresh token.");
         }
 
-        if (!_passwordHasher.Verify(
-                secret,
-                PasswordHash.From(refreshToken.TokenHash)))
+        if (refreshToken.IsExpired)
         {
-            throw new BusinessRuleViolationException(
-                "Invalid refresh token.");
+            throw new BusinessRuleViolationException("Refresh token has expired.");
+        }
+
+        if (refreshToken.IsRevoked)
+        {
+            if (refreshToken.WasRotated)
+            {
+                await _refreshTokenRepository.RevokeFamilyAsync(
+                    refreshToken.FamilyId,
+                    cancellationToken
+                );
+
+                throw new BusinessRuleViolationException(
+                    "Security violation: Token reuse detected. Session revoked."
+                );
+            }
+
+            throw new BusinessRuleViolationException("Refresh token has been revoked.");
         }
 
         var user = refreshToken.User;
 
         var newRefreshToken = _refreshTokenProvider.Generate();
 
-        var newRefreshTokenHash =
-            _passwordHasher.Hash(newRefreshToken.Secret);
+        var newRefreshTokenHash = _secretHasher.Hash(newRefreshToken.Secret);
 
-        var newRefreshTokenEntity =
-            RefreshToken.Create(
-                newRefreshToken.Id,
-                user.Id,
-                newRefreshTokenHash.Value,
-                DateTimeOffset.UtcNow.AddDays(30));
+        var newRefreshTokenEntity = RefreshToken.Create(
+            newRefreshToken.Id,
+            refreshToken.FamilyId,
+            user.Id,
+            newRefreshTokenHash,
+            DateTimeOffset.UtcNow.AddDays(30)
+        );
 
         refreshToken.Revoke(newRefreshTokenEntity.Id);
 
-        _refreshTokenRepository.Update(refreshToken);
+        await _refreshTokenRepository.Update(refreshToken);
 
-        await _refreshTokenRepository.AddAsync(
-            newRefreshTokenEntity,
-            cancellationToken);
+        await _refreshTokenRepository.AddAsync(newRefreshTokenEntity, cancellationToken);
 
-        var accessToken = _jwtProvider.GenerateToken(
-            new JwtUser(
-                user.Id.Value,
-                user.Email.Value));
+        var accessToken = _jwtProvider.GenerateToken(new JwtUser(user.Id.Value, user.Email.Value));
 
-        await _unitOfWork.SaveChangesAsync(
-            cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return new RefreshResponse(
-            accessToken,
-            _refreshTokenProvider.BuildToken(newRefreshToken));
+        return new RefreshResponse(accessToken, _refreshTokenProvider.BuildToken(newRefreshToken));
     }
 }

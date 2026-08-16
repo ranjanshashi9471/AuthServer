@@ -8,23 +8,18 @@ public sealed class LoginEndpoint : IEndpoint
 {
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapPost(
-            "/auth/login",
-            HandleAsync)
-        .WithName("Login")
-        .WithTags("Authentication");
+        endpoints.MapPost("/auth/login", HandleAsync).WithName("Login").WithTags("Authentication");
     }
 
     private static async Task<Ok<LoginResponse>> HandleAsync(
         LoginRequest request,
         ICommandBus commandBus,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var command = new LoginCommand(request.Email, request.Password);
 
-        var response = await commandBus.Send(
-            command,
-            cancellationToken);
+        var response = await commandBus.Send(command, cancellationToken);
 
         return TypedResults.Ok(response);
     }

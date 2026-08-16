@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <ItemGroup>
     <ProjectReference Include="..\AuthServer.Application\AuthServer.Application.csproj" />
     <ProjectReference Include="..\AuthServer.Domain\AuthServer.Domain.csproj" />
@@ -25,5 +24,4 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-
 </Project>
