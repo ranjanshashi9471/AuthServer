@@ -1,9 +1,9 @@
 using AuthServer.Domain.ValueObjects;
 
-namespace AuthServer.Application.Abstractions.Communication.Notifications;
+namespace AuthServer.Application.Abstractions.Notifications;
 
 public sealed record PasswordResetNotification(
     Email Destination,
     string ResetToken,
     string ResetUrl
-);
+) : Notification;

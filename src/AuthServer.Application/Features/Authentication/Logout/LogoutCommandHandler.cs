@@ -10,19 +10,19 @@ internal sealed class LogoutCommandHandler : ICommandHandler<LogoutCommand>
 {
     private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly IRefreshTokenProvider _refreshTokenProvider;
-    private readonly IPasswordHasher _passwordHasher;
+    private readonly ISecretHasher _secretHasher;
     private readonly IUnitOfWork _unitOfWork;
 
     public LogoutCommandHandler(
         IRefreshTokenRepository refreshTokenRepository,
         IRefreshTokenProvider refreshTokenProvider,
-        IPasswordHasher passwordHasher,
+        ISecretHasher secretHasher,
         IUnitOfWork unitOfWork
     )
     {
         _refreshTokenRepository = refreshTokenRepository;
         _refreshTokenProvider = refreshTokenProvider;
-        _passwordHasher = passwordHasher;
+        _secretHasher = secretHasher;
         _unitOfWork = unitOfWork;
     }
 
@@ -51,7 +51,7 @@ internal sealed class LogoutCommandHandler : ICommandHandler<LogoutCommand>
             throw new BusinessRuleViolationException("Invalid refresh token.");
         }
 
-        if (!_passwordHasher.Verify(secret, PasswordHash.From(refreshToken.TokenHash)))
+        if (!_secretHasher.Verify(secret, refreshToken.TokenHash))
         {
             throw new BusinessRuleViolationException("Invalid refresh token.");
         }
@@ -63,7 +63,7 @@ internal sealed class LogoutCommandHandler : ICommandHandler<LogoutCommand>
 
         refreshToken.Revoke();
 
-        _refreshTokenRepository.Update(refreshToken);
+        await _refreshTokenRepository.Update(refreshToken);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }

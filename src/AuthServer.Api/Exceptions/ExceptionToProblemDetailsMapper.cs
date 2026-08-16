@@ -19,13 +19,13 @@ internal static class ExceptionToProblemDetailsMapper
                 }
             ),
 
-            UnauthorizedAccessException unauthorizedException => new ExceptionMapping(
+            AuthenticationException authenticationException => new ExceptionMapping(
                 StatusCodes.Status401Unauthorized,
                 new ProblemDetails
                 {
                     Status = StatusCodes.Status401Unauthorized,
                     Title = "Unauthorized",
-                    Detail = unauthorizedException.Message,
+                    Detail = authenticationException.Message,
                 }
             ),
 

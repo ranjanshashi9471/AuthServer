@@ -7,6 +7,8 @@ public sealed class RefreshToken : Entity<RefreshTokenId>
 {
     public UserId UserId { get; private set; } = null!;
 
+    public RefreshTokenFamilyId FamilyId { get; private set; } = null!;
+
     public string TokenHash { get; private set; } = null!;
 
     public DateTimeOffset ExpiresAt { get; private set; }
@@ -21,12 +23,14 @@ public sealed class RefreshToken : Entity<RefreshTokenId>
 
     private RefreshToken(
         RefreshTokenId id,
+        RefreshTokenFamilyId refreshTokenFamilyId,
         UserId userId,
         string tokenHash,
         DateTimeOffset expiresAt
     )
         : base(id, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow)
     {
+        FamilyId = refreshTokenFamilyId;
         UserId = userId;
         TokenHash = tokenHash;
         ExpiresAt = expiresAt;
@@ -34,12 +38,13 @@ public sealed class RefreshToken : Entity<RefreshTokenId>
 
     public static RefreshToken Create(
         RefreshTokenId id,
+        RefreshTokenFamilyId refreshTokenFamilyId,
         UserId userId,
         string tokenHash,
         DateTimeOffset expiresAt
     )
     {
-        return new RefreshToken(id, userId, tokenHash, expiresAt);
+        return new RefreshToken(id, refreshTokenFamilyId, userId, tokenHash, expiresAt);
     }
 
     public void Revoke(RefreshTokenId? replacedByTokenId = null)
@@ -58,4 +63,6 @@ public sealed class RefreshToken : Entity<RefreshTokenId>
     public bool IsRevoked => RevokedAt is not null;
 
     public bool IsActive => !IsExpired && !IsRevoked;
+
+    public bool WasRotated => ReplacedByTokenId is not null;
 }

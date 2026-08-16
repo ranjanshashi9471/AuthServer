@@ -20,6 +20,10 @@ internal sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<Refre
 
         builder.Property(rt => rt.UserId).HasStronglyTypedIdConversion(value => UserId.From(value));
 
+        builder
+            .Property(rt => rt.FamilyId)
+            .HasStronglyTypedIdConversion(value => RefreshTokenFamilyId.From(value));
+
         builder.Property(rt => rt.TokenHash).HasMaxLength(512).IsRequired();
 
         builder.Property(rt => rt.CreatedAt).IsRequired();

@@ -6,7 +6,6 @@ using AuthServer.Application.Messaging.Abstractions;
 using AuthServer.Contracts.Authentication.Refresh;
 using AuthServer.Domain.Entities;
 using AuthServer.Domain.Exceptions;
-using AuthServer.Domain.ValueObjects;
 
 internal sealed class RefreshCommandHandler : ICommandHandler<RefreshCommand, RefreshResponse>
 {
@@ -57,14 +56,31 @@ internal sealed class RefreshCommandHandler : ICommandHandler<RefreshCommand, Re
             throw new BusinessRuleViolationException("Invalid refresh token.");
         }
 
-        if (!refreshToken.IsActive)
-        {
-            throw new BusinessRuleViolationException("Refresh token has expired or been revoked.");
-        }
-
         if (!_secretHasher.Verify(secret, refreshToken.TokenHash))
         {
             throw new BusinessRuleViolationException("Invalid refresh token.");
+        }
+
+        if (refreshToken.IsExpired)
+        {
+            throw new BusinessRuleViolationException("Refresh token has expired.");
+        }
+
+        if (refreshToken.IsRevoked)
+        {
+            if (refreshToken.WasRotated)
+            {
+                await _refreshTokenRepository.RevokeFamilyAsync(
+                    refreshToken.FamilyId,
+                    cancellationToken
+                );
+
+                throw new BusinessRuleViolationException(
+                    "Security violation: Token reuse detected. Session revoked."
+                );
+            }
+
+            throw new BusinessRuleViolationException("Refresh token has been revoked.");
         }
 
         var user = refreshToken.User;
@@ -75,6 +91,7 @@ internal sealed class RefreshCommandHandler : ICommandHandler<RefreshCommand, Re
 
         var newRefreshTokenEntity = RefreshToken.Create(
             newRefreshToken.Id,
+            refreshToken.FamilyId,
             user.Id,
             newRefreshTokenHash,
             DateTimeOffset.UtcNow.AddDays(30)
@@ -82,7 +99,7 @@ internal sealed class RefreshCommandHandler : ICommandHandler<RefreshCommand, Re
 
         refreshToken.Revoke(newRefreshTokenEntity.Id);
 
-        _refreshTokenRepository.Update(refreshToken);
+        await _refreshTokenRepository.Update(refreshToken);
 
         await _refreshTokenRepository.AddAsync(newRefreshTokenEntity, cancellationToken);
 

@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AuthServer.Infrastructure.Persistence;
 
-public sealed class AuthDbContext : DbContext, IUnitOfWork
+internal sealed class AuthDbContext : DbContext, IUnitOfWork
 {
     public AuthDbContext(DbContextOptions<AuthDbContext> options)
         : base(options) { }
@@ -15,10 +15,21 @@ public sealed class AuthDbContext : DbContext, IUnitOfWork
 
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
 
+    public DbSet<EmailVerificationToken> EmailVerificationTokens => Set<EmailVerificationToken>();
+
+    public async Task<ITransaction> BeginTransactionAsync(
+        CancellationToken cancellationToken = default
+    )
+    {
+        var transaction = await Database.BeginTransactionAsync(cancellationToken);
+
+        return new EfCoreTransaction(transaction);
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AuthDbContext).Assembly);
-
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AuthDbContext).Assembly);
     }
 }

@@ -1,10 +1,8 @@
-using AuthServer.Application.Abstractions.Communication.Notifications;
+using AuthServer.Application.Abstractions.Notifications;
 using AuthServer.Application.Abstractions.Persistence;
 using AuthServer.Application.Abstractions.Security;
 using AuthServer.Application.Messaging.Abstractions;
-using AuthServer.Domain.Entities;
 using AuthServer.Domain.Exceptions;
-using AuthServer.Domain.ValueObjects;
 
 namespace AuthServer.Application.Features.Authentication.ResetPassword;
 
@@ -79,7 +77,10 @@ public sealed class ResetPasswordCommandHandler : ICommandHandler<ResetPasswordC
                 "New password must be different from current password."
             );
 
+        await using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
+
         var newPasswordHash = _passwordHasher.Hash(command.NewPassword);
+
         user.ChangePassword(newPasswordHash);
 
         resetToken.Use();
@@ -89,12 +90,11 @@ public sealed class ResetPasswordCommandHandler : ICommandHandler<ResetPasswordC
             cancellationToken
         );
 
-        foreach (var token in activeRefreshTokens)
-        {
-            token.Revoke();
-        }
+        await _refreshTokenRepository.RevokeAllByUserIdAsync(user.Id, cancellationToken);
 
         // 10. Commit changes atomically
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        await transaction.CommitAsync(cancellationToken);
     }
 }

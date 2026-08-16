@@ -14,22 +14,27 @@ internal sealed class PasswordResetTokenRepository : IPasswordResetTokenReposito
         _context = context;
     }
 
-    public async Task AddAsync(
+    public Task AddAsync(
         PasswordResetToken resetToken,
         CancellationToken cancellationToken = default
     )
     {
-        await _context.PasswordResetTokens.AddAsync(resetToken, cancellationToken);
+        // Synchronous Add is faster because it only modifies the in-memory Change Tracker
+        _context.PasswordResetTokens.Add(resetToken);
+
+        return Task.CompletedTask;
     }
 
-    public async Task<PasswordResetToken?> GetByIdAsync(
+    public Task<PasswordResetToken?> GetByIdAsync(
         PasswordResetTokenId id,
         CancellationToken cancellationToken = default
     )
     {
-        return await _context
+        // Elided async/await: passing the Task directly.
+        // FirstOrDefaultAsync executes a 'LIMIT 1' query, optimal for Primary Key lookups.
+        return _context
             .PasswordResetTokens.Include(prt => prt.User)
-            .SingleOrDefaultAsync(prt => prt.Id == id, cancellationToken);
+            .FirstOrDefaultAsync(prt => prt.Id == id, cancellationToken);
     }
 
     public async Task<IReadOnlyList<PasswordResetToken>> GetActiveByUserIdAsync(
@@ -37,9 +42,13 @@ internal sealed class PasswordResetTokenRepository : IPasswordResetTokenReposito
         CancellationToken cancellationToken = default
     )
     {
+        // Extracting 'now' enables EF Core query plan caching
+        var now = DateTimeOffset.UtcNow;
+
+        // Retained async/await because Task<List<T>> does not implicitly cast to Task<IReadOnlyList<T>>.
         return await _context
             .PasswordResetTokens.Where(prt =>
-                prt.UserId == userId && prt.UsedAt == null && prt.ExpiresAt > DateTimeOffset.UtcNow
+                prt.UserId == userId && prt.UsedAt == null && prt.ExpiresAt > now
             )
             .ToListAsync(cancellationToken);
     }

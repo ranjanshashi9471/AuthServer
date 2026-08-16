@@ -6,6 +6,7 @@ using AuthServer.Contracts.Authentication;
 using AuthServer.Domain.Entities;
 using AuthServer.Domain.Exceptions;
 using AuthServer.Domain.ValueObjects;
+using AuthServer.Domain.ValueObjects.Identifiers;
 
 namespace AuthServer.Application.Features.Authentication.Login;
 
@@ -13,6 +14,7 @@ internal sealed class LoginCommandHandler : ICommandHandler<LoginCommand, LoginR
 {
     private readonly IUserRepository _users;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly ISecretHasher _secretHasher;
     private readonly IJwtProvider _jwtProvider;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IRefreshTokenProvider _refreshTokenProvider;
@@ -21,6 +23,7 @@ internal sealed class LoginCommandHandler : ICommandHandler<LoginCommand, LoginR
     public LoginCommandHandler(
         IUserRepository users,
         IPasswordHasher passwordHasher,
+        ISecretHasher secretHasher, // <-- ADDED THIS
         IJwtProvider jwtProvider,
         IUnitOfWork unitOfWork,
         IRefreshTokenProvider refreshTokenProvider,
@@ -29,6 +32,7 @@ internal sealed class LoginCommandHandler : ICommandHandler<LoginCommand, LoginR
     {
         _users = users;
         _passwordHasher = passwordHasher;
+        _secretHasher = secretHasher;
         _jwtProvider = jwtProvider;
         _unitOfWork = unitOfWork;
         _refreshTokenProvider = refreshTokenProvider;
@@ -47,6 +51,7 @@ internal sealed class LoginCommandHandler : ICommandHandler<LoginCommand, LoginR
             throw new BusinessRuleViolationException("Invalid email or password.");
         }
 
+        // 1. Use PasswordHasher for the user's password
         if (!_passwordHasher.Verify(command.Password, user.PasswordHash))
         {
             throw new BusinessRuleViolationException("Invalid email or password.");
@@ -58,15 +63,17 @@ internal sealed class LoginCommandHandler : ICommandHandler<LoginCommand, LoginR
         // }
 
         var accessToken = _jwtProvider.GenerateToken(new JwtUser(user.Id.Value, user.Email.Value));
-
         var refreshToken = _refreshTokenProvider.Generate();
+        var familyId = RefreshTokenFamilyId.New();
 
-        var refreshTokenHash = _passwordHasher.Hash(refreshToken.Secret);
+        // 2. Use SecretHasher for the Refresh Token
+        var refreshTokenHash = _secretHasher.Hash(refreshToken.Secret);
 
         var refreshTokenEntity = RefreshToken.Create(
             refreshToken.Id,
+            familyId,
             user.Id,
-            refreshTokenHash.Value,
+            refreshTokenHash,
             DateTimeOffset.UtcNow.AddDays(30)
         );
 

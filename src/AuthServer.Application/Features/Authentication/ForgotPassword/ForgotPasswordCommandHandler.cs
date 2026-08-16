@@ -1,7 +1,6 @@
-using AuthServer.Application.Abstractions.Communication.Notifications;
+using AuthServer.Application.Abstractions.Notifications;
 using AuthServer.Application.Abstractions.Persistence;
 using AuthServer.Application.Abstractions.Security;
-using AuthServer.Application.Abstractions.Security.Models;
 using AuthServer.Application.Messaging.Abstractions;
 using AuthServer.Domain.Entities;
 using AuthServer.Domain.Exceptions;
@@ -61,7 +60,7 @@ public sealed class ForgotPasswordCommandHandler : ICommandHandler<ForgotPasswor
 
         var rawTokenValue = _tokenProvider.BuildToken(tokenData);
 
-        await _notificationService.SendPasswordResetAsync(
+        await _notificationService.SendAsync(
             new PasswordResetNotification(user.Email, rawTokenValue, ""),
             cancellationToken
         );

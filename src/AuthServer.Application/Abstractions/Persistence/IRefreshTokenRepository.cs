@@ -12,10 +12,17 @@ public interface IRefreshTokenRepository
         CancellationToken cancellationToken = default
     );
 
-    void Update(RefreshToken refreshToken);
+    Task Update(RefreshToken refreshToken);
 
     Task<IReadOnlyList<RefreshToken>> GetActiveByUserIdAsync(
         UserId userId,
         CancellationToken cancellationToken = default
     );
+
+    Task RevokeFamilyAsync(
+        RefreshTokenFamilyId refreshTokenFamilyId,
+        CancellationToken cancellationToken = default
+    );
+
+    Task RevokeAllByUserIdAsync(UserId userId, CancellationToken cancellationToken = default);
 }

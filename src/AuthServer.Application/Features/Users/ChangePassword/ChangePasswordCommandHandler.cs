@@ -56,20 +56,16 @@ internal sealed class ChangePasswordCommandHandler : ICommandHandler<ChangePassw
             );
         }
 
+        await using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
+
         var newPasswordHash = _passwordHasher.Hash(command.NewPassword);
 
         user.ChangePassword(newPasswordHash);
 
-        var activeRefreshTokens = await _refreshTokenRepository.GetActiveByUserIdAsync(
-            userId,
-            cancellationToken
-        );
-
-        foreach (var token in activeRefreshTokens)
-        {
-            token.Revoke();
-        }
+        await _refreshTokenRepository.RevokeAllByUserIdAsync(userId, cancellationToken);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        await transaction.CommitAsync(cancellationToken);
     }
 }
