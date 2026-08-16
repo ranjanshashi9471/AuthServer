@@ -4,6 +4,7 @@ using AuthServer.Application.Abstractions.Security.Models;
 using AuthServer.Application.Messaging.Abstractions;
 using AuthServer.Contracts.Authentication;
 using AuthServer.Domain.Entities;
+using AuthServer.Domain.Enums;
 using AuthServer.Domain.Exceptions;
 using AuthServer.Domain.ValueObjects;
 using AuthServer.Domain.ValueObjects.Identifiers;
@@ -57,16 +58,15 @@ internal sealed class LoginCommandHandler : ICommandHandler<LoginCommand, LoginR
             throw new BusinessRuleViolationException("Invalid email or password.");
         }
 
-        // if (user.Status != UserStatus.Active)
-        // {
-        //     throw new BusinessRuleViolationException("User not active.");
-        // }
+        if (user.Status != UserStatus.Active)
+        {
+            throw new BusinessRuleViolationException("User not active.");
+        }
 
         var accessToken = _jwtProvider.GenerateToken(new JwtUser(user.Id.Value, user.Email.Value));
         var refreshToken = _refreshTokenProvider.Generate();
         var familyId = RefreshTokenFamilyId.New();
 
-        // 2. Use SecretHasher for the Refresh Token
         var refreshTokenHash = _secretHasher.Hash(refreshToken.Secret);
 
         var refreshTokenEntity = RefreshToken.Create(
