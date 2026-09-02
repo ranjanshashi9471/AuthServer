@@ -40,6 +40,7 @@ public sealed class ResetPasswordCommandHandler : ICommandHandler<ResetPasswordC
 
     public async Task Handle(ResetPasswordCommand command, CancellationToken cancellationToken)
     {
+        // 1. Token format verification -> 401
         if (
             !_tokenProvider.TryParse(
                 command.AccessToken,
@@ -47,9 +48,7 @@ public sealed class ResetPasswordCommandHandler : ICommandHandler<ResetPasswordC
                 out var secret
             )
         )
-        {
-            throw new BusinessRuleViolationException("Invalid Token");
-        }
+            throw new AuthenticationException("Invalid or expired reset token.");
 
         var resetToken = await _resetTokenRepository.GetByIdAsync(
             resetPasswordTokenId,
@@ -57,44 +56,51 @@ public sealed class ResetPasswordCommandHandler : ICommandHandler<ResetPasswordC
         );
 
         if (resetToken is null)
-            throw new BusinessRuleViolationException("Invalid Token");
+            throw new AuthenticationException("Invalid or expired reset token.");
 
         if (resetToken.IsUsed || resetToken.IsExpired)
-            throw new BusinessRuleViolationException(
-                "Reset token has expired or already been used."
-            );
+            throw new AuthenticationException("Reset token has expired or already been used.");
 
         if (!_secretHasher.Verify(secret, resetToken.TokenHash))
-            throw new BusinessRuleViolationException("Invalid or expired reset token.");
+            throw new AuthenticationException("Invalid or expired reset token.");
 
+        // 2. User resolution -> 404
         var user = await _userRepository.GetByIdAsync(resetToken.UserId, cancellationToken);
 
         if (user is null)
-            throw new BusinessRuleViolationException("User not found.");
+            throw new KeyNotFoundException("User not found.");
 
+        // 3. Business logic validation -> 400/409
         if (_passwordHasher.Verify(command.NewPassword, user.PasswordHash))
             throw new BusinessRuleViolationException(
-                "New password must be different from current password."
+                "New password must be different from the current password."
             );
 
+        // 4. Begin Explicit Transaction for mixed execution strategies
         await using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
         var newPasswordHash = _passwordHasher.Hash(command.NewPassword);
 
         user.ChangePassword(newPasswordHash);
-
         resetToken.Use();
 
-        var activeRefreshTokens = await _refreshTokenRepository.GetActiveByUserIdAsync(
-            user.Id,
-            cancellationToken
-        );
-
+        // High-performance immediate database execution
         await _refreshTokenRepository.RevokeAllByUserIdAsync(user.Id, cancellationToken);
 
-        // 10. Commit changes atomically
+        // Save in-memory tracked changes (User, ResetToken)
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+        // Commit the transaction
         await transaction.CommitAsync(cancellationToken);
+
+        // 5. Dispatch Security Notification
+        // MUST happen after the transaction commits to avoid sending false alerts!
+        // await _notificationService.SendAsync(
+        //     new SecurityAlertNotification(
+        //         user.Email,
+        //         "Your password was recently changed. If you did not make this request, please contact support immediately."
+        //     ),
+        //     cancellationToken
+        // );
     }
 }

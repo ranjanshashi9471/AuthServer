@@ -1,8 +1,7 @@
 using AuthServer.Application.Abstractions.Persistence;
 using AuthServer.Application.Abstractions.Security;
 using AuthServer.Application.Messaging.Abstractions;
-using AuthServer.Domain.Exceptions;
-using AuthServer.Domain.ValueObjects;
+using AuthServer.Domain.Exceptions; // Can be removed if we use silent returns
 
 namespace AuthServer.Application.Features.Authentication.Logout;
 
@@ -28,8 +27,7 @@ internal sealed class LogoutCommandHandler : ICommandHandler<LogoutCommand>
 
     public async Task Handle(LogoutCommand command, CancellationToken cancellationToken)
     {
-        Console.WriteLine("Command handler!!");
-
+        // 1. If parsing fails, silently succeed
         if (
             !_refreshTokenProvider.TryParse(
                 command.RefreshToken,
@@ -38,7 +36,7 @@ internal sealed class LogoutCommandHandler : ICommandHandler<LogoutCommand>
             )
         )
         {
-            throw new BusinessRuleViolationException("Invalid refresh token.");
+            return;
         }
 
         var refreshToken = await _refreshTokenRepository.GetByIdAsync(
@@ -46,24 +44,20 @@ internal sealed class LogoutCommandHandler : ICommandHandler<LogoutCommand>
             cancellationToken
         );
 
+        // 2. If it doesn't exist, silently succeed
         if (refreshToken is null)
-        {
-            throw new BusinessRuleViolationException("Invalid refresh token.");
-        }
-
-        if (!_secretHasher.Verify(secret, refreshToken.TokenHash))
-        {
-            throw new BusinessRuleViolationException("Invalid refresh token.");
-        }
-
-        if (!refreshToken.IsActive)
         {
             return;
         }
 
-        refreshToken.Revoke();
+        // 3. If the secret is wrong, silently succeed
+        if (!_secretHasher.Verify(secret, refreshToken.TokenHash))
+        {
+            return;
+        }
 
-        await _refreshTokenRepository.Update(refreshToken);
+        // 4. Defense-in-depth: Revoke the entire family via the optimized bulk update
+        await _refreshTokenRepository.RevokeFamilyAsync(refreshToken.FamilyId, cancellationToken);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }

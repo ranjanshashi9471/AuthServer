@@ -1,4 +1,5 @@
 using AuthServer.Api.Abstractions;
+using AuthServer.Api.Extensions;
 using AuthServer.Application.Messaging.Abstractions;
 using AuthServer.Contracts.Authentication;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -13,7 +14,10 @@ public sealed class RegisterUserEndpoint : IEndpoint
     {
         app.MapPost("/auth/register", HandleAsync)
             .WithName("RegisterUser")
-            .WithTags("Authentication");
+            .WithTags("Authentication")
+            .RequireRateLimiting(RateLimitingExtensions.Register)
+            .Produces(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status429TooManyRequests);
     }
 
     #endregion

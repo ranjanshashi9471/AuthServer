@@ -1,4 +1,5 @@
 using AuthServer.Api.Abstractions;
+using AuthServer.Api.Extensions;
 using AuthServer.Application.Features.Authentication.Refresh;
 using AuthServer.Application.Messaging.Abstractions;
 using AuthServer.Contracts.Authentication.Refresh;
@@ -12,7 +13,10 @@ public sealed class RefreshEndpoint : IEndpoint
         endpoints
             .MapPost("/auth/refresh", HandleAsync)
             .WithName("Refresh")
-            .WithTags("Authentication");
+            .WithTags("Authentication")
+            .RequireRateLimiting(RateLimitingExtensions.Refresh)
+            .Produces(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status429TooManyRequests);
     }
 
     private static async Task<IResult> HandleAsync(

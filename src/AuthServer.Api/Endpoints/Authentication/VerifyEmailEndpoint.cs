@@ -1,4 +1,5 @@
 using AuthServer.Api.Abstractions;
+using AuthServer.Api.Extensions;
 using AuthServer.Application.Features.Authentication.ResendVerification;
 using AuthServer.Application.Features.Authentication.VerifyEmail;
 using AuthServer.Application.Messaging.Abstractions;
@@ -26,7 +27,11 @@ public class EmailVerificationEndpoints : IEndpoint
                     return Results.NoContent();
                 }
             )
-            .AllowAnonymous();
+            .AllowAnonymous()
+            .RequireRateLimiting(RateLimitingExtensions.VerifyEmail)
+            .Produces(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status429TooManyRequests);
+        ;
 
         group
             .MapPost(
@@ -44,6 +49,9 @@ public class EmailVerificationEndpoints : IEndpoint
                     return Results.NoContent();
                 }
             )
-            .AllowAnonymous();
+            .AllowAnonymous()
+            .RequireRateLimiting(RateLimitingExtensions.VerifyEmail)
+            .Produces(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status429TooManyRequests);
     }
 }

@@ -16,4 +16,9 @@ public interface IEmailVerificationTokenRepository
         UserId userId,
         CancellationToken cancellationToken = default
     );
+
+    Task<DateTimeOffset?> GetLatestCreatedAtByUserIdAsync(
+        UserId userId,
+        CancellationToken cancellationToken = default
+    );
 }

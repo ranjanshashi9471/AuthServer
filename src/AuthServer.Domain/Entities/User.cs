@@ -9,13 +9,11 @@ namespace AuthServer.Domain.Entities;
 public sealed class User : Entity<UserId>
 {
     public Email Email { get; private set; } = null!;
-
     public Username Username { get; private set; } = null!;
-
     public PasswordHash PasswordHash { get; private set; } = null!;
-
     public UserStatus Status { get; private set; }
-
+    public int AccessFailedCount { get; private set; }
+    public DateTimeOffset? LockoutEnd { get; private set; }
     private readonly List<RefreshToken> _refreshTokens = [];
 
     private User() { }
@@ -26,8 +24,8 @@ public sealed class User : Entity<UserId>
         Email = email;
         Username = username;
         PasswordHash = passwordHash;
-
         Status = UserStatus.PendingVerification;
+        AccessFailedCount = 0;
     }
 
     public IReadOnlyCollection<RefreshToken> RefreshTokens => _refreshTokens;
@@ -37,13 +35,53 @@ public sealed class User : Entity<UserId>
         return new User(UserId.New(), email, username, passwordHash);
     }
 
+    public bool IsLockedOut => LockoutEnd.HasValue && LockoutEnd.Value > DateTimeOffset.UtcNow;
+
+    public void RecordFailedLogin(int maxFailedAccessAttempts, TimeSpan lockoutDuration)
+    {
+        if (IsLockedOut)
+            return;
+
+        AccessFailedCount++;
+
+        if (AccessFailedCount >= maxFailedAccessAttempts)
+        {
+            LockoutEnd = DateTimeOffset.UtcNow.Add(lockoutDuration);
+        }
+
+        Touch();
+    }
+
+    public void RecordSuccessfulLogin()
+    {
+        if (AccessFailedCount == 0 && LockoutEnd is null)
+            return;
+
+        AccessFailedCount = 0;
+        LockoutEnd = null;
+
+        Touch();
+    }
+
+    public void ClearExpiredLockout()
+    {
+        if (LockoutEnd is null || LockoutEnd > DateTimeOffset.UtcNow)
+            return;
+
+        AccessFailedCount = 0;
+        LockoutEnd = null;
+
+        Touch();
+    }
+
+    // --- EXISTING BEHAVIORS ---
+
     public void VerifyEmail()
     {
         if (Status != UserStatus.PendingVerification)
             throw new BusinessRuleViolationException("User is not pending email verification.");
 
         Status = UserStatus.Active;
-
         Touch();
     }
 
@@ -53,7 +91,6 @@ public sealed class User : Entity<UserId>
             throw new BusinessRuleViolationException("Only active users can be locked.");
 
         Status = UserStatus.Locked;
-
         Touch();
     }
 
@@ -63,7 +100,6 @@ public sealed class User : Entity<UserId>
             throw new BusinessRuleViolationException("User is not locked.");
 
         Status = UserStatus.Active;
-
         Touch();
     }
 
@@ -73,17 +109,12 @@ public sealed class User : Entity<UserId>
             throw new BusinessRuleViolationException($"User '{Id}' is already disabled.");
 
         Status = UserStatus.Disabled;
-
         Touch();
     }
 
     public void ChangePassword(PasswordHash newPasswordHash)
     {
-        if (PasswordHash == newPasswordHash)
-            throw new BusinessRuleViolationException("New password must be different.");
-
         PasswordHash = newPasswordHash;
-
         Touch();
     }
 }
