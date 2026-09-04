@@ -26,10 +26,8 @@ public sealed class LogoutEndpoint : IEndpoint // <-- Fixed typo here
                     return Results.NoContent();
                 }
             )
-            .RequireAuthorization() // Optional: Require valid JWT to log out
             .WithName("Logout")
             .WithTags("Authentication")
-            .Produces(StatusCodes.Status204NoContent)
-            .ProducesProblem(StatusCodes.Status401Unauthorized);
+            .Produces(StatusCodes.Status204NoContent);
     }
 }

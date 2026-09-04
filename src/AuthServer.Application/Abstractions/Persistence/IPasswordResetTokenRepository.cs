@@ -18,4 +18,9 @@ public interface IPasswordResetTokenRepository
         UserId userId,
         CancellationToken cancellationToken = default
     );
+
+    Task<bool> MarkAsUsedAsync(
+        PasswordResetTokenId id,
+        CancellationToken cancellationToken = default
+    );
 }

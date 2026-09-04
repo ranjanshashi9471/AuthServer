@@ -5,7 +5,10 @@ using AuthServer.Application.Features.Authentication.Refresh;
 using AuthServer.Application.Messaging.Abstractions;
 using AuthServer.Contracts.Authentication.Refresh;
 using AuthServer.Domain.Entities;
+using AuthServer.Domain.Enums;
 using AuthServer.Domain.Exceptions;
+
+namespace AuthServer.Application.Features.Authentication.Refresh;
 
 internal sealed class RefreshCommandHandler : ICommandHandler<RefreshCommand, RefreshResponse>
 {
@@ -43,7 +46,7 @@ internal sealed class RefreshCommandHandler : ICommandHandler<RefreshCommand, Re
             )
         )
         {
-            throw new BusinessRuleViolationException("Invalid refresh token.");
+            throw new AuthenticationException("Invalid refresh token.");
         }
 
         var refreshToken = await _refreshTokenRepository.GetByIdAsync(
@@ -51,42 +54,56 @@ internal sealed class RefreshCommandHandler : ICommandHandler<RefreshCommand, Re
             cancellationToken
         );
 
-        if (refreshToken is null)
+        // 1. Verify token exists and hash matches
+        if (refreshToken is null || !_secretHasher.Verify(secret, refreshToken.TokenHash))
         {
-            throw new BusinessRuleViolationException("Invalid refresh token.");
+            throw new AuthenticationException("Invalid refresh token.");
         }
 
-        if (!_secretHasher.Verify(secret, refreshToken.TokenHash))
-        {
-            throw new BusinessRuleViolationException("Invalid refresh token.");
-        }
-
+        // 2. Standard expiration check
         if (refreshToken.IsExpired)
         {
-            throw new BusinessRuleViolationException("Refresh token has expired.");
+            throw new AuthenticationException("Refresh token has expired. Please log in again.");
         }
 
+        // 3. TOKEN REUSE DETECTION (Family Invalidation)
         if (refreshToken.IsRevoked)
         {
             if (refreshToken.WasRotated)
             {
+                // Security Breach: Someone is reusing a rotated token!
                 await _refreshTokenRepository.RevokeFamilyAsync(
                     refreshToken.FamilyId,
                     cancellationToken
                 );
 
-                throw new BusinessRuleViolationException(
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                throw new AuthenticationException(
                     "Security violation: Token reuse detected. Session revoked."
                 );
             }
 
-            throw new BusinessRuleViolationException("Refresh token has been revoked.");
+            throw new AuthenticationException("Refresh token has been revoked.");
         }
 
         var user = refreshToken.User;
 
-        var newRefreshToken = _refreshTokenProvider.Generate();
+        // 4. CRITICAL: Enforce User Status and Lockouts
+        if (user.Status != UserStatus.Active)
+        {
+            throw new AuthenticationException("Account is not active.");
+        }
 
+        user.ClearExpiredLockout();
+
+        if (user.IsLockedOut)
+        {
+            throw new AuthenticationException("Account is temporarily locked.");
+        }
+
+        // 5. Rotate the tokens
+        var newRefreshToken = _refreshTokenProvider.Generate();
         var newRefreshTokenHash = _secretHasher.Hash(newRefreshToken.Secret);
 
         var newRefreshTokenEntity = RefreshToken.Create(
@@ -99,8 +116,8 @@ internal sealed class RefreshCommandHandler : ICommandHandler<RefreshCommand, Re
 
         refreshToken.Revoke(newRefreshTokenEntity.Id);
 
+        // Explicit update is fine, though EF Core tracks it automatically.
         await _refreshTokenRepository.Update(refreshToken);
-
         await _refreshTokenRepository.AddAsync(newRefreshTokenEntity, cancellationToken);
 
         var accessToken = _jwtProvider.GenerateToken(new JwtUser(user.Id.Value, user.Email.Value));

@@ -20,6 +20,7 @@ internal sealed class LoginCommandHandler : ICommandHandler<LoginCommand, LoginR
     private readonly IJwtProvider _jwtProvider;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IRefreshTokenProvider _refreshTokenProvider;
+
     private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly AuthenticationSecurityOptions _securityOptions;
 

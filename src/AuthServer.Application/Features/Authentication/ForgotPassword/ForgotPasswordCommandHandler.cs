@@ -41,7 +41,7 @@ public sealed class ForgotPasswordCommandHandler : ICommandHandler<ForgotPasswor
         var user = await _userRepository.GetByEmailAsync(email);
 
         if (user is null)
-            throw new BusinessRuleViolationException("User not found");
+            return;
 
         var tokenData = _tokenProvider.Generate();
 

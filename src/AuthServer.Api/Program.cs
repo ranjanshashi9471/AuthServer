@@ -21,10 +21,11 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddAuthenticationServices(builder.Configuration);
 
-// 1. Configure Forwarded Headers (Extracts real IP from load balancers/proxies)
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
 });
 
 // 2. Add Rate Limiting Services

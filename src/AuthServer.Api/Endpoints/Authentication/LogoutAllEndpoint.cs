@@ -1,8 +1,6 @@
 using AuthServer.Api.Abstractions;
 using AuthServer.Application.Features.Authentication.LogoutAll;
 using AuthServer.Application.Messaging.Abstractions;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 
 namespace AuthServer.Api.Endpoints.Authentication;
 

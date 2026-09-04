@@ -13,6 +13,11 @@
     <Folder Include="Features\Authentication\Login\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="AuthServer.UnitTests" />
+    <InternalsVisibleTo Include="AuthServer.IntegrationTests" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>

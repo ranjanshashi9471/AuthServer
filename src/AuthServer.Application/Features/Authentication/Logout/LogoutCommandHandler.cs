@@ -56,9 +56,6 @@ internal sealed class LogoutCommandHandler : ICommandHandler<LogoutCommand>
             return;
         }
 
-        // 4. Defense-in-depth: Revoke the entire family via the optimized bulk update
         await _refreshTokenRepository.RevokeFamilyAsync(refreshToken.FamilyId, cancellationToken);
-
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }
