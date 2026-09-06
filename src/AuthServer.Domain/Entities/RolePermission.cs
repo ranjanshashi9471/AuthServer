@@ -6,9 +6,11 @@ namespace AuthServer.Domain.Entities;
 public sealed class RolePermission : Entity<RolePermissionId>
 {
     public RoleId RoleId { get; private set; }
+
     public PermissionId PermissionId { get; private set; }
 
     public Role Role { get; private set; } = null!;
+
     public Permission Permission { get; private set; } = null!;
 
     private RolePermission() { }

@@ -29,7 +29,7 @@ internal static class ExceptionToProblemDetailsMapper
                 }
             ),
 
-            KeyNotFoundException notFoundException => new ExceptionMapping(
+            NotFoundException notFoundException => new ExceptionMapping(
                 StatusCodes.Status404NotFound,
                 new ProblemDetails
                 {

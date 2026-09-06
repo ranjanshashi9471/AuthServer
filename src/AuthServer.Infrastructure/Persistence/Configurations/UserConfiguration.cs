@@ -53,5 +53,9 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .WithOne(rt => rt.User)
             .HasForeignKey(rt => rt.UserId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder
+            .Metadata.FindNavigation(nameof(User.Roles))!
+            .SetPropertyAccessMode(PropertyAccessMode.Field);
     }
 }

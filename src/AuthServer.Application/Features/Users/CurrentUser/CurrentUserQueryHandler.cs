@@ -31,7 +31,7 @@ internal sealed class CurrentUserQueryHandler : IQueryHandler<CurrentUserQuery, 
         if (user is null)
         {
             // Roadmap: A requested resource does not exist -> 404
-            throw new KeyNotFoundException($"User with ID '{userId.Value}' was not found.");
+            throw new NotFoundException($"User with ID '{userId.Value}' was not found.");
         }
 
         return new CurrentUserResponse(user.Id.Value, user.Email.Value, user.Username.Value);

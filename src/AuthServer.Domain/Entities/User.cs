@@ -12,9 +12,17 @@ public sealed class User : Entity<UserId>
     public Username Username { get; private set; } = null!;
     public PasswordHash PasswordHash { get; private set; } = null!;
     public UserStatus Status { get; private set; }
+
+    // Authentication security
     public int AccessFailedCount { get; private set; }
     public DateTimeOffset? LockoutEnd { get; private set; }
+
+    // Relationships
     private readonly List<RefreshToken> _refreshTokens = [];
+    private readonly List<UserRole> _roles = [];
+
+    public IReadOnlyCollection<RefreshToken> RefreshTokens => _refreshTokens;
+    public IReadOnlyCollection<UserRole> Roles => _roles;
 
     private User() { }
 
@@ -28,12 +36,14 @@ public sealed class User : Entity<UserId>
         AccessFailedCount = 0;
     }
 
-    public IReadOnlyCollection<RefreshToken> RefreshTokens => _refreshTokens;
-
     public static User Create(Email email, Username username, PasswordHash passwordHash)
     {
         return new User(UserId.New(), email, username, passwordHash);
     }
+
+    // =========================================================
+    // Authentication Security
+    // =========================================================
 
     public bool IsLockedOut => LockoutEnd.HasValue && LockoutEnd.Value > DateTimeOffset.UtcNow;
 
@@ -74,7 +84,33 @@ public sealed class User : Entity<UserId>
         Touch();
     }
 
-    // --- EXISTING BEHAVIORS ---
+    // =========================================================
+    // Authorization / Roles
+    // =========================================================
+
+    public void AssignRole(RoleId roleId)
+    {
+        if (_roles.Any(r => r.RoleId == roleId))
+            return;
+
+        _roles.Add(UserRole.Create(Id, roleId));
+        Touch();
+    }
+
+    public void RemoveRole(RoleId roleId)
+    {
+        var role = _roles.FirstOrDefault(r => r.RoleId == roleId);
+
+        if (role is null)
+            return;
+
+        _roles.Remove(role);
+        Touch();
+    }
+
+    // =========================================================
+    // Account Lifecycle
+    // =========================================================
 
     public void VerifyEmail()
     {

@@ -7,9 +7,11 @@ namespace AuthServer.Domain.Entities;
 public sealed class Role : Entity<RoleId>
 {
     private readonly List<UserRole> _userRoles = [];
+
     private readonly List<RolePermission> _rolePermissions = [];
 
     public string Name { get; private set; } = null!;
+
     public string Description { get; private set; } = null!;
 
     public IReadOnlyCollection<UserRole> UserRoles => _userRoles;
@@ -42,6 +44,26 @@ public sealed class Role : Entity<RoleId>
             throw new BusinessRuleViolationException("Role description cannot be empty.");
 
         Description = description.Trim();
+        Touch();
+    }
+
+    public void AddPermission(PermissionId permissionId)
+    {
+        if (_rolePermissions.Any(rp => rp.PermissionId == permissionId))
+            return;
+
+        _rolePermissions.Add(RolePermission.Create(Id, permissionId));
+        Touch();
+    }
+
+    public void RemovePermission(PermissionId permissionId)
+    {
+        var rolePermission = _rolePermissions.FirstOrDefault(rp => rp.PermissionId == permissionId);
+
+        if (rolePermission is null)
+            return;
+
+        _rolePermissions.Remove(rolePermission);
         Touch();
     }
 }
