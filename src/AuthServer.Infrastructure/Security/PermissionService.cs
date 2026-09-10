@@ -40,4 +40,39 @@ internal sealed class PermissionService : IPermissionService
 
         return [.. permissions];
     }
+
+    public async Task<HashSet<PermissionId>> GetPermissionIdsAsync(
+        UserId userId,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var permissionIds = await _context
+            .Set<UserRole>()
+            .AsNoTracking()
+            .Where(ur => ur.UserId == userId)
+            .Join(
+                _context.Set<RolePermission>(),
+                ur => ur.RoleId,
+                rp => rp.RoleId,
+                (_, rp) => rp.PermissionId
+            )
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        return [.. permissionIds];
+    }
+
+    public async Task<HashSet<PermissionId>> GetPermissionIdsForRoleAsync(
+        RoleId roleId,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var permissionIds = await _context
+            .Set<RolePermission>()
+            .Where(rp => rp.RoleId == roleId)
+            .Select(rp => rp.PermissionId)
+            .ToListAsync(cancellationToken);
+
+        return [.. permissionIds];
+    }
 }

@@ -58,3 +58,9 @@ app.UseRateLimiter();
 app.MapEndpoints();
 
 app.Run();
+
+// Replace 'public partial class Program { }' with this:
+namespace AuthServer.Api
+{
+    public interface IApiMarker { }
+}

@@ -15,4 +15,9 @@ public interface IPermissionRepository
     );
 
     void Add(Permission permission);
+
+    Task<HashSet<PermissionId>> GetPermissionIdsForRoleAsync(
+        RoleId roleId,
+        CancellationToken cancellationToken = default
+    );
 }

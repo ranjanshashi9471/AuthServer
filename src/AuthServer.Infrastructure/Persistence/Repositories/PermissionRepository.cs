@@ -47,4 +47,18 @@ internal sealed class PermissionRepository : IPermissionRepository
     {
         _context.Permissions.Add(permission);
     }
+
+    public async Task<HashSet<PermissionId>> GetPermissionIdsForRoleAsync(
+        RoleId roleId,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var permissionIds = await _context
+            .Set<RolePermission>()
+            .Where(rp => rp.RoleId == roleId)
+            .Select(rp => rp.PermissionId)
+            .ToListAsync(cancellationToken);
+
+        return [.. permissionIds];
+    }
 }
