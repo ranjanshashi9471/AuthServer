@@ -2,7 +2,6 @@ using AuthServer.Api.Abstractions;
 using AuthServer.Application.Features.Authentication.ForgotPassword;
 using AuthServer.Application.Messaging.Abstractions;
 using AuthServer.Contracts.Authentication.ForgotPassword;
-using Microsoft.AspNetCore.Mvc;
 
 namespace AuthServer.Api.Endpoints.Authentication;
 
@@ -13,6 +12,7 @@ public sealed class ForgotPasswordEndpoint : IEndpoint
         app.MapPost("/auth/forgot-password", HandleAsync)
             .WithName("ForgotPassword")
             .WithTags("Authentication")
+            .RequireRateLimiting(Extensions.RateLimitingExtensions.ForgotPassword)
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status400BadRequest);
     }

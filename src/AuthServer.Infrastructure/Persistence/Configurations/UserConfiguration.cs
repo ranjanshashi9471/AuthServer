@@ -40,6 +40,10 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(50).IsRequired();
 
+        builder.Property(x => x.AccessFailedCount).HasDefaultValue(0).IsRequired();
+
+        builder.Property(x => x.LockoutEnd).IsRequired(false);
+
         builder.Property(x => x.CreatedAt).IsRequired();
 
         builder.Property(x => x.UpdatedAt).IsRequired();
@@ -49,5 +53,9 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .WithOne(rt => rt.User)
             .HasForeignKey(rt => rt.UserId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder
+            .Metadata.FindNavigation(nameof(User.Roles))!
+            .SetPropertyAccessMode(PropertyAccessMode.Field);
     }
 }

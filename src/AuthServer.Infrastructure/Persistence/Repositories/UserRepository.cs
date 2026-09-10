@@ -17,25 +17,21 @@ internal sealed class UserRepository : IUserRepository
 
     public Task<User?> GetByIdAsync(UserId id, CancellationToken cancellationToken = default)
     {
-        // FirstOrDefaultAsync compiles to LIMIT 1, making it faster for PK lookups
         return _context.Users.FirstOrDefaultAsync(user => user.Id == id, cancellationToken);
     }
 
     public Task<User?> GetByEmailAsync(Email email, CancellationToken cancellationToken = default)
     {
-        // Optimal for Unique columns
         return _context.Users.FirstOrDefaultAsync(user => user.Email == email, cancellationToken);
     }
 
     public Task<bool> ExistsByEmailAsync(Email email, CancellationToken cancellationToken = default)
     {
-        // AnyAsync is perfectly optimal (Translates to IF EXISTS(...) in SQL)
         return _context.Users.AnyAsync(user => user.Email == email, cancellationToken);
     }
 
     public Task AddAsync(User user, CancellationToken cancellationToken = default)
     {
-        // Synchronous Add is recommended by EF Core for in-memory change tracking
         _context.Users.Add(user);
 
         return Task.CompletedTask;

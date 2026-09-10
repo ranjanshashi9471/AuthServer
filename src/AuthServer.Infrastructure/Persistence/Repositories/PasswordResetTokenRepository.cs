@@ -30,8 +30,6 @@ internal sealed class PasswordResetTokenRepository : IPasswordResetTokenReposito
         CancellationToken cancellationToken = default
     )
     {
-        // Elided async/await: passing the Task directly.
-        // FirstOrDefaultAsync executes a 'LIMIT 1' query, optimal for Primary Key lookups.
         return _context
             .PasswordResetTokens.Include(prt => prt.User)
             .FirstOrDefaultAsync(prt => prt.Id == id, cancellationToken);
@@ -56,5 +54,27 @@ internal sealed class PasswordResetTokenRepository : IPasswordResetTokenReposito
     public void Update(PasswordResetToken resetToken)
     {
         _context.PasswordResetTokens.Update(resetToken);
+    }
+
+    public async Task<bool> MarkAsUsedAsync(
+        PasswordResetTokenId id,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var now = DateTimeOffset.UtcNow;
+
+        var rowsAffected = await _context
+            .PasswordResetTokens.Where(prt =>
+                prt.Id == id && prt.UsedAt == null && prt.ExpiresAt > now
+            )
+            .ExecuteUpdateAsync(
+                setters =>
+                    setters
+                        .SetProperty(prt => prt.UsedAt, now)
+                        .SetProperty(prt => prt.UpdatedAt, now),
+                cancellationToken
+            );
+
+        return rowsAffected > 0;
     }
 }

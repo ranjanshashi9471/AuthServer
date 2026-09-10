@@ -2,8 +2,11 @@ using AuthServer.Api.Abstractions;
 using AuthServer.Application.Features.Authentication.Logout;
 using AuthServer.Application.Messaging.Abstractions;
 using AuthServer.Contracts.Authentication.Logout;
+using Microsoft.AspNetCore.Http; // Needed for StatusCodes
 
-public sealed class LogoutEnpoint : IEndpoint
+namespace AuthServer.Api.Endpoints.Authentication;
+
+public sealed class LogoutEndpoint : IEndpoint // <-- Fixed typo here
 {
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
@@ -24,6 +27,7 @@ public sealed class LogoutEnpoint : IEndpoint
                 }
             )
             .WithName("Logout")
-            .WithTags("Authentication");
+            .WithTags("Authentication")
+            .Produces(StatusCodes.Status204NoContent);
     }
 }

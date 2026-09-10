@@ -45,6 +45,8 @@ public sealed class PasswordResetToken : Entity<PasswordResetTokenId>
 
     public bool IsUsed => UsedAt is not null;
 
+    public bool IsActive => !IsUsed && !IsExpired;
+
     public void Use()
     {
         if (IsUsed)

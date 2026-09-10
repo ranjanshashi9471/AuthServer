@@ -1,4 +1,5 @@
 using AuthServer.Api.Abstractions;
+using AuthServer.Api.Extensions;
 using AuthServer.Application.Features.Authentication.Login;
 using AuthServer.Application.Messaging.Abstractions;
 using AuthServer.Contracts.Authentication;
@@ -8,7 +9,13 @@ public sealed class LoginEndpoint : IEndpoint
 {
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapPost("/auth/login", HandleAsync).WithName("Login").WithTags("Authentication");
+        endpoints
+            .MapPost("/auth/login", HandleAsync)
+            .WithName("Login")
+            .WithTags("Authentication")
+            .RequireRateLimiting(RateLimitingExtensions.Login)
+            .Produces(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status429TooManyRequests);
     }
 
     private static async Task<Ok<LoginResponse>> HandleAsync(

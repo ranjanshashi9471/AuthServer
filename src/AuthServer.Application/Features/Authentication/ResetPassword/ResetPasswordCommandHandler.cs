@@ -40,6 +40,7 @@ public sealed class ResetPasswordCommandHandler : ICommandHandler<ResetPasswordC
 
     public async Task Handle(ResetPasswordCommand command, CancellationToken cancellationToken)
     {
+        // 1. Parsing & cryptographic validation
         if (
             !_tokenProvider.TryParse(
                 command.AccessToken,
@@ -48,7 +49,7 @@ public sealed class ResetPasswordCommandHandler : ICommandHandler<ResetPasswordC
             )
         )
         {
-            throw new BusinessRuleViolationException("Invalid Token");
+            throw new AuthenticationException("Invalid or expired reset token.");
         }
 
         var resetToken = await _resetTokenRepository.GetByIdAsync(
@@ -56,45 +57,66 @@ public sealed class ResetPasswordCommandHandler : ICommandHandler<ResetPasswordC
             cancellationToken
         );
 
-        if (resetToken is null)
-            throw new BusinessRuleViolationException("Invalid Token");
-
-        if (resetToken.IsUsed || resetToken.IsExpired)
-            throw new BusinessRuleViolationException(
-                "Reset token has expired or already been used."
-            );
+        // Early fast-path advisory check
+        if (resetToken is null || !resetToken.IsActive)
+        {
+            throw new AuthenticationException("Invalid or expired reset token.");
+        }
 
         if (!_secretHasher.Verify(secret, resetToken.TokenHash))
-            throw new BusinessRuleViolationException("Invalid or expired reset token.");
+        {
+            throw new AuthenticationException("Invalid or expired reset token.");
+        }
 
+        // 2. Uniform error handling for user resolution (Anti-enumeration)
         var user = await _userRepository.GetByIdAsync(resetToken.UserId, cancellationToken);
 
         if (user is null)
-            throw new BusinessRuleViolationException("User not found.");
+        {
+            throw new AuthenticationException("Invalid or expired reset token.");
+        }
 
+        // 3. Prevent reusing the current password
         if (_passwordHasher.Verify(command.NewPassword, user.PasswordHash))
+        {
             throw new BusinessRuleViolationException(
-                "New password must be different from current password."
+                "New password must be different from the current password."
             );
+        }
 
+        // 4. Atomic execution & domain state transitions
         await using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
-        var newPasswordHash = _passwordHasher.Hash(command.NewPassword);
-
-        user.ChangePassword(newPasswordHash);
-
-        resetToken.Use();
-
-        var activeRefreshTokens = await _refreshTokenRepository.GetActiveByUserIdAsync(
-            user.Id,
+        // Concurrency Boundary: Atomic check-and-set in DB guarantees single-use
+        var consumed = await _resetTokenRepository.MarkAsUsedAsync(
+            resetToken.Id,
             cancellationToken
         );
 
+        if (!consumed)
+        {
+            throw new AuthenticationException("Invalid or expired reset token.");
+        }
+
+        var newPasswordHash = _passwordHasher.Hash(command.NewPassword);
+        user.ChangePassword(newPasswordHash);
+
+        // Reset failed login counter and clear temporary lockout
+        user.RecordSuccessfulLogin();
+
+        // Invalidate all active sessions globally
         await _refreshTokenRepository.RevokeAllByUserIdAsync(user.Id, cancellationToken);
 
-        // 10. Commit changes atomically
+        // Persist User state changes
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+        // Commit transaction
         await transaction.CommitAsync(cancellationToken);
+
+        // 5. Post-commit notification dispatch
+        // await _notificationService.SendAsync(
+        //     new SecurityAlertNotification(user.Email, "Your password was recently changed."),
+        //     cancellationToken
+        // );
     }
 }

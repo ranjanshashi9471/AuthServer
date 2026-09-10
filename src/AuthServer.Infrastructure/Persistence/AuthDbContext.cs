@@ -17,6 +17,10 @@ internal sealed class AuthDbContext : DbContext, IUnitOfWork
 
     public DbSet<EmailVerificationToken> EmailVerificationTokens => Set<EmailVerificationToken>();
 
+    public DbSet<Role> Roles => Set<Role>();
+
+    public DbSet<Permission> Permissions => Set<Permission>();
+
     public async Task<ITransaction> BeginTransactionAsync(
         CancellationToken cancellationToken = default
     )

@@ -1,8 +1,10 @@
 using System.Text;
 using AuthServer.Api.Authentication;
+using AuthServer.Api.Authorization;
 using AuthServer.Application.Abstractions.Security;
 using AuthServer.Infrastructure.Security.Jwt;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 
 namespace AuthServer.Api.Extensions;
@@ -16,7 +18,14 @@ public static class AuthenticationServiceCollectionExtensions
     {
         services.AddHttpContextAccessor();
 
+        // 1. Core Scoped Services
         services.AddScoped<ICurrentUser, CurrentUser>();
+
+        // 2. Authorization Handler MUST be Scoped because it injects Scoped services
+        services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+
+        // 3. The Policy Provider can be Singleton as it has no scoped dependencies
+        services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
 
         var jwtOptions =
             configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()

@@ -7,9 +7,13 @@ namespace AuthServer.Domain.Entities;
 public sealed class EmailVerificationToken : Entity<EmailVerificationTokenId>
 {
     public UserId UserId { get; private set; } = null!;
+
     public string TokenHash { get; private set; } = null!;
+
     public DateTimeOffset ExpiresAt { get; private set; }
+
     public DateTimeOffset? UsedAt { get; private set; }
+
     public DateTimeOffset? InvalidatedAt { get; private set; }
 
     public User User { get; private set; } = null!;
@@ -40,8 +44,11 @@ public sealed class EmailVerificationToken : Entity<EmailVerificationTokenId>
     }
 
     public bool IsExpired => DateTimeOffset.UtcNow >= ExpiresAt;
+
     public bool IsUsed => UsedAt is not null;
+
     public bool IsInvalidated => InvalidatedAt is not null;
+
     public bool IsActive => !IsExpired && !IsUsed && !IsInvalidated;
 
     public void Use()

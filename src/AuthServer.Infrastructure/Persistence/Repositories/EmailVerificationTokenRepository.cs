@@ -67,4 +67,16 @@ internal sealed class EmailVerificationTokenRepository : IEmailVerificationToken
                 cancellationToken
             );
     }
+
+    public Task<DateTimeOffset?> GetLatestCreatedAtByUserIdAsync(
+        UserId userId,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return _context
+            .EmailVerificationTokens.Where(t => t.UserId == userId)
+            .OrderByDescending(t => t.CreatedAt)
+            .Select(t => (DateTimeOffset?)t.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
 }

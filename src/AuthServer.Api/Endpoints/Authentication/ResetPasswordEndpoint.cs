@@ -1,4 +1,5 @@
 using AuthServer.Api.Abstractions;
+using AuthServer.Api.Extensions;
 using AuthServer.Application.Features.Authentication.ResetPassword;
 using AuthServer.Application.Messaging.Abstractions;
 using AuthServer.Contracts.Authentication.ResetPassword;
@@ -13,7 +14,9 @@ public sealed class ResetPasswordEndpoint : IEndpoint
             .WithName("ResetPassword")
             .WithTags("Authentication")
             .Produces(StatusCodes.Status204NoContent)
-            .ProducesProblem(StatusCodes.Status400BadRequest);
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .RequireRateLimiting(RateLimitingExtensions.ResetPassword)
+            .ProducesProblem(StatusCodes.Status429TooManyRequests);
     }
 
     private static async Task<IResult> HandleAsync(

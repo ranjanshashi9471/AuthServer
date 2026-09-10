@@ -29,7 +29,17 @@ internal static class ExceptionToProblemDetailsMapper
                 }
             ),
 
-            KeyNotFoundException notFoundException => new ExceptionMapping(
+            ForbiddenException forbiddenException => new ExceptionMapping(
+                StatusCodes.Status403Forbidden,
+                new ProblemDetails
+                {
+                    Status = StatusCodes.Status403Forbidden,
+                    Title = "Forbidden Access",
+                    Detail = forbiddenException.Message,
+                }
+            ),
+
+            NotFoundException notFoundException => new ExceptionMapping(
                 StatusCodes.Status404NotFound,
                 new ProblemDetails
                 {
