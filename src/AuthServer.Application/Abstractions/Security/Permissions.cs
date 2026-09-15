@@ -14,4 +14,6 @@ public static class Permissions
 
     public const string PermissionsCreate = "permissions.create";
     public const string UsersAssignRole = "users.assign-role";
+
+    public const string ClientsCreate = "clients.create";
 }

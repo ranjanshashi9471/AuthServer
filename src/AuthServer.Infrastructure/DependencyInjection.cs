@@ -51,6 +51,7 @@ public static class DependencyInjection
         services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<IPermissionRepository, PermissionRepository>();
         services.AddScoped<IPermissionService, PermissionService>();
+        services.AddScoped<IClientRepository, ClientRepository>();
 
         // Communications / Notifications
         AddNotifications(services, configuration); // Fixed: Properly routes via config
